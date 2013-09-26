@@ -38,6 +38,13 @@
 #include <LUFA/Drivers/Peripheral/Serial.h>
 #include <avr/wdt.h>
 
+#define USART_BAUDRATE 500000
+
+#define LED_PIN 6
+
+#define LED_ON (PORTD |= (1<<LED_PIN))
+#define LED_OFF (PORTD &= ~(1<<LED_PIN))
+
 /*
  * The reference report data.
  */
@@ -54,20 +61,13 @@ static uint8_t report[20] = {
       0x00,0x00,0x00,0x00,0x00,0x00
 };
 
-#define USART_BAUDRATE 500000
-
 static uint8_t* pdata = report;
 static unsigned char i = 0;
 
+static unsigned char sendReport = 0;
+
 static unsigned char led = 0;
 static unsigned char j = 0;
-
-#define LED_PIN 6
-
-#define LED_ON (PORTD |= (1<<LED_PIN))
-#define LED_OFF (PORTD &= ~(1<<LED_PIN))
-
-static unsigned char sendReport = 0;
 
 static unsigned char spoof_initialized = 0;
 
@@ -133,6 +133,23 @@ static inline void SerialRxData(char* buf, unsigned short* length)
   };
 }
 
+/** Main program entry point. This routine configures the hardware required by the application, then
+ *  enters a loop to run the application tasks in sequence.
+ */
+int main(void)
+{
+  SetupHardware();
+
+  GlobalInterruptEnable();
+
+  for (;;)
+  {
+    //Serial_Task();
+    HID_Task();
+    USB_USBTask();
+  }
+}
+
 ISR(USART1_RX_vect)
 {
   pdata[i++] = UDR1;
@@ -149,23 +166,6 @@ void serial_init(void)
    Serial_Init(USART_BAUDRATE, false);
 
    //UCSR1B |= (1 << RXCIE1); // Enable the USART Receive Complete interrupt (USART_RXC)
-}
-
-/** Main program entry point. This routine configures the hardware required by the application, then
- *  enters a loop to run the application tasks in sequence.
- */
-int main(void)
-{
-  SetupHardware();
-
-  GlobalInterruptEnable();
-
-  for (;;)
-  {
-    //Serial_Task();
-    HID_Task();
-    USB_USBTask();
-  }
 }
 
 /** Configures the board hardware and chip peripherals for the demo's functionality. */

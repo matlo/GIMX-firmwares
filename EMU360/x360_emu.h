@@ -48,8 +48,6 @@
 
 		#include <LUFA/Version.h>
 		#include <LUFA/Drivers/USB/USB.h>
-		//#include <LUFA/Drivers/Board/Joystick.h>
-		//#include <LUFA/Drivers/Board/Buttons.h>
 		#include <LUFA/Drivers/Board/LEDs.h>
 
 	/* Macros: */
@@ -78,7 +76,7 @@
 		void EVENT_USB_Device_Connect(void);
 		void EVENT_USB_Device_Disconnect(void);
 		void EVENT_USB_Device_ConfigurationChanged(void);
-		void EVENT_USB_Device_UnhandledControlRequest(void);
+		void EVENT_USB_Device_ControlRequest(void);
 //    void EVENT_USB_Device_StartOfFrame(void);
 
 		void ProcessLEDReport(uint8_t LEDReport);
