@@ -47,9 +47,7 @@
 
 		#include <LUFA/Version.h>
 		#include <LUFA/Drivers/USB/USB.h>
-		#include <LUFA/Drivers/Board/Joystick.h>
 		#include <LUFA/Drivers/Board/LEDs.h>
-		#include <LUFA/Drivers/Board/Buttons.h>
 
 	/* Macros: */
 		/** LED mask for the library LED driver, to indicate that the USB interface is not ready. */
@@ -64,20 +62,6 @@
 		/** LED mask for the library LED driver, to indicate that an error has occurred in the USB interface. */
 		#define LEDMASK_USB_ERROR        (LEDS_LED1 | LEDS_LED3)
 
-	/* Type Defines: */
-		/** Type define for the joystick HID report structure, for creating and sending HID reports to the host PC.
-		 *  This mirrors the layout described to the host in the HID report descriptor, in Descriptors.c.
-		 */
-    typedef struct
-    {
-      int16_t  X;
-      int16_t  Y;
-      int16_t  Z;
-      int16_t  Rz;
-      int16_t  Hat;
-      uint16_t Bt;
-    } USB_JoystickReport_Data_t;
-
 	/* Function Prototypes: */
 		void SetupHardware(void);
 		void HID_Task(void);
@@ -86,8 +70,6 @@
 		void EVENT_USB_Device_Disconnect(void);
 		void EVENT_USB_Device_ConfigurationChanged(void);
 		void EVENT_USB_Device_ControlRequest(void);
-
-		bool GetNextReport(USB_JoystickReport_Data_t* const ReportData);
 
 #endif
 

@@ -35,15 +35,38 @@
  */
 
 #include "Joystick.h"
-#include <util/delay.h>
+#include <LUFA/Drivers/Peripheral/Serial.h>
 
-//#define USART_BAUDRATE 1000000
 #define USART_BAUDRATE 500000
-#define BAUD_PRESCALE (((F_CPU / (USART_BAUDRATE * 16UL))) - 1)
 
-USB_JoystickReport_Data_t data = {};
-uint8_t* pdata = (uint8_t*)&data;
-unsigned char i = 0;
+#define LED_PIN 6
+
+#define LED_ON (PORTD |= (1<<LED_PIN))
+#define LED_OFF (PORTD &= ~(1<<LED_PIN))
+
+/*
+ * The reference report data.
+ */
+static uint8_t report[12] =
+{
+    0x00,0x00,//xaxis
+    0x00,0x00,//yaxis
+    0x00,0x00,//zaxis
+    0x00,0x00,//rzaxis
+    0x00,0x00,//hat
+    0x00,0x00,//buttons
+};
+
+static uint8_t* pdata = report;
+static unsigned char i = 0;
+
+static unsigned char sendReport = 0;
+
+static inline int16_t Serial_BlockingReceiveByte(void)
+{
+  while(!Serial_IsCharReceived());
+  return UDR1;
+}
 
 /** Main program entry point. This routine configures the hardware required by the application, then
  *  enters a loop to run the application tasks in sequence.
@@ -52,8 +75,7 @@ int main(void)
 {
 	SetupHardware();
 
-	LEDs_SetAllLEDs(LEDMASK_USB_NOTREADY);
-	sei();
+  GlobalInterruptEnable();
 
 	for (;;)
 	{
@@ -64,25 +86,20 @@ int main(void)
 
 ISR(USART1_RX_vect)
 {
-  pdata[i] = UDR1; // Fetch the received byte value
-  //UDR1 = pdata[i]; // Echo back the received byte back to the computer
-
-  i++;
-  i%=sizeof(USB_JoystickReport_Data_t);
+  pdata[i++] = UDR1;
+  while(i < sizeof(report))
+  {
+    pdata[i++] = Serial_BlockingReceiveByte();
+  }
+  i = 0;
+  sendReport = 1;
 }
 
 void serial_init(void)
 {
-   UBRR1H = (BAUD_PRESCALE >> 8); // Load upper 8-bits of the baud rate value into the high byte of the UBRR register
-   UBRR1L = BAUD_PRESCALE; // Load lower 8-bits of the baud rate value into the low byte of the UBRR register
+  Serial_Init(USART_BAUDRATE, false);
 
-   UCSR1B |= (1 << RXEN1) | (1 << TXEN1); // Turn on the transmission and reception circuitry
-
-   UCSR1C |= _BV(UCSZ10) | _BV(UCSZ11); /* 8 bits per char */
-
-   UCSR1B |= (1 << RXCIE1); // Enable the USART Receive Complete interrupt (USART_RXC)
-
-   return;
+  UCSR1B |= (1 << RXCIE1); // Enable the USART Receive Complete interrupt (USART_RXC)
 }
 
 /** Configures the board hardware and chip peripherals for the demo's functionality. */
@@ -98,9 +115,9 @@ void SetupHardware(void)
 	serial_init();
 
 	/* Hardware Initialization */
-//	Joystick_Init();
-//	LEDs_Init();
-//	Buttons_Init();
+  //LEDs_Init();
+  DDRD |= (1<<LED_PIN);
+
 	USB_Init();
 }
 
@@ -152,21 +169,24 @@ static const uint8_t PROGMEM magic_init_bytes[] =
  */
 void EVENT_USB_Device_ControlRequest(void)
 {
-	/* Handle HID Class specific requests */
+  /* Handle HID Class specific requests */
 	switch (USB_ControlRequest.bRequest)
 	{
 		case HID_REQ_GetReport:
 			if (USB_ControlRequest.bmRequestType == (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_INTERFACE))
 			{
-				USB_JoystickReport_Data_t JoystickReportData;
+			  Endpoint_ClearSETUP();
+			  if(USB_ControlRequest.wValue == 0x0300)
+			  {
+			    /* Write the report data to the control endpoint */
+          Endpoint_Write_Control_PStream_LE(magic_init_bytes, sizeof(magic_init_bytes));
+			  }
+			  else
+			  {
+			    /* Write the report data to the control endpoint */
+          Endpoint_Write_Control_Stream_LE(report, sizeof(report));
+			  }
 
-				/* Create the next HID report to send to the host */
-				GetNextReport(&JoystickReportData);
-
-				Endpoint_ClearSETUP();
-
-				/* Write the report data to the control endpoint */
-				Endpoint_Write_Control_Stream_LE(&JoystickReportData, sizeof(JoystickReportData));
 				Endpoint_ClearOUT();
 			}
 
@@ -174,17 +194,25 @@ void EVENT_USB_Device_ControlRequest(void)
 	}
 }
 
-/** Fills the given HID report data structure with the next HID report to send to the host.
- *
- *  \param[out] ReportData  Pointer to a HID report data structure to be filled
- *
- *  \return Boolean true if the new report differs from the last report, false otherwise
- */
-bool GetNextReport(USB_JoystickReport_Data_t* const ReportData)
+/** Sends the next HID report to the host, via the IN endpoint. */
+void SendNextReport(void)
 {
-  memcpy(ReportData, &data, sizeof(USB_JoystickReport_Data_t));
+  /* Select the IN Report Endpoint */
+  Endpoint_SelectEndpoint(JOYSTICK_EPNUM);
 
-  return true;
+  if (sendReport)
+  {
+    /* Wait until the host is ready to accept another packet */
+    while (!Endpoint_IsINReady()) {}
+
+    /* Write IN Report Data */
+    Endpoint_Write_Stream_LE(report, sizeof(report), NULL);
+
+    sendReport = 0;
+
+    /* Finalize the stream transfer to send the last packet */
+    Endpoint_ClearIN();
+  }
 }
 
 /** Function to manage HID report generation and transmission to the host. */
@@ -194,25 +222,6 @@ void HID_Task(void)
 	if (USB_DeviceState != DEVICE_STATE_Configured)
 	  return;
 
-	/* Select the Joystick Report Endpoint */
-	Endpoint_SelectEndpoint(JOYSTICK_EPNUM);
-
-	/* Check to see if the host is ready for another packet */
-	if (Endpoint_IsINReady())
-	{
-		USB_JoystickReport_Data_t JoystickReportData;
-
-		/* Create the next HID report to send to the host */
-		GetNextReport(&JoystickReportData);
-
-		/* Write Joystick Report Data */
-		Endpoint_Write_Stream_LE(&JoystickReportData, sizeof(JoystickReportData), NULL);
-
-		/* Finalize the stream transfer to send the last packet */
-		Endpoint_ClearIN();
-
-		/* Clear the report data afterwards */
-		memset(&JoystickReportData, 0, sizeof(JoystickReportData));
-	}
+  /* Send the next keypress report to the host */
+  SendNextReport();
 }
-
