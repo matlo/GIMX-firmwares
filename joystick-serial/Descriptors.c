@@ -80,7 +80,7 @@
 //	0xc0,                /*   End Collection                                   */
 //	0xc0                 /* End Collection                                     */
 //};
-USB_Descriptor_HIDReport_Datatype_t PROGMEM JoystickReport[] =
+const USB_Descriptor_HIDReport_Datatype_t PROGMEM JoystickReport[] =
 {
   0x05, 0x01,          /* Usage Page (Generic Desktop)                       */
   0x09, 0x04,          /* Usage (Joystick)                                   */
@@ -131,7 +131,7 @@ USB_Descriptor_HIDReport_Datatype_t PROGMEM JoystickReport[] =
  *  number of device configurations. The descriptor is read out by the USB host when the enumeration
  *  process begins.
  */
-USB_Descriptor_Device_t PROGMEM DeviceDescriptor =
+const USB_Descriptor_Device_t PROGMEM DeviceDescriptor =
 {
 	.Header                 = {.Size = sizeof(USB_Descriptor_Device_t), .Type = DTYPE_Device},
 
@@ -158,7 +158,7 @@ USB_Descriptor_Device_t PROGMEM DeviceDescriptor =
  *  and endpoints. The descriptor is read out by the USB host during the enumeration process when selecting
  *  a configuration so that the host may correctly communicate with the USB device.
  */
-USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
+const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 {
 	.Config =
 		{
@@ -170,7 +170,7 @@ USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 			.ConfigurationNumber    = 1,
 			.ConfigurationStrIndex  = NO_DESCRIPTOR,
 
-			.ConfigAttributes       = (USB_CONFIG_ATTR_BUSPOWERED | USB_CONFIG_ATTR_SELFPOWERED),
+			.ConfigAttributes       = (USB_CONFIG_ATTR_RESERVED | USB_CONFIG_ATTR_SELFPOWERED),
 
 			.MaxPowerConsumption    = USB_CONFIG_POWER_MA(100)
 		},
@@ -206,7 +206,7 @@ USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 		{
 			.Header                 = {.Size = sizeof(USB_Descriptor_Endpoint_t), .Type = DTYPE_Endpoint},
 
-			.EndpointAddress        = (ENDPOINT_DESCRIPTOR_DIR_IN | JOYSTICK_EPNUM),
+			.EndpointAddress        = JOYSTICK_EPNUM,
 			.Attributes             = (EP_TYPE_INTERRUPT | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
 			.EndpointSize           = JOYSTICK_EPSIZE,
 			.PollingIntervalMS      = 0x01
@@ -217,7 +217,7 @@ USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
  *  the string descriptor with index 0 (the first index). It is actually an array of 16-bit integers, which indicate
  *  via the language ID table available at USB.org what languages the device supports for its string descriptors.
  */
-USB_Descriptor_String_t PROGMEM LanguageString =
+const USB_Descriptor_String_t PROGMEM LanguageString =
 {
 	.Header                 = {.Size = USB_STRING_LEN(1), .Type = DTYPE_String},
 
@@ -228,7 +228,7 @@ USB_Descriptor_String_t PROGMEM LanguageString =
  *  form, and is read out upon request by the host when the appropriate string ID is requested, listed in the Device
  *  Descriptor.
  */
-USB_Descriptor_String_t PROGMEM ManufacturerString =
+const USB_Descriptor_String_t PROGMEM ManufacturerString =
 {
 	.Header                 = {.Size = USB_STRING_LEN(11), .Type = DTYPE_String},
 
@@ -239,7 +239,7 @@ USB_Descriptor_String_t PROGMEM ManufacturerString =
  *  and is read out upon request by the host when the appropriate string ID is requested, listed in the Device
  *  Descriptor.
  */
-USB_Descriptor_String_t PROGMEM ProductString =
+const USB_Descriptor_String_t PROGMEM ProductString =
 {
 	.Header                 = {.Size = USB_STRING_LEN(18), .Type = DTYPE_String},
 

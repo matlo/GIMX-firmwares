@@ -130,8 +130,7 @@ void EVENT_USB_Device_ConfigurationChanged(void)
 	bool ConfigSuccess = true;
 
 	/* Setup HID Report Endpoint */
-	ConfigSuccess &= Endpoint_ConfigureEndpoint(JOYSTICK_EPNUM, EP_TYPE_INTERRUPT, ENDPOINT_DIR_IN,
-	                                            JOYSTICK_EPSIZE, ENDPOINT_BANK_SINGLE);
+	ConfigSuccess &= Endpoint_ConfigureEndpoint(JOYSTICK_EPNUM, EP_TYPE_INTERRUPT, JOYSTICK_EPSIZE, 1);
 
 	/* Indicate endpoint configuration success or failure */
 	LEDs_SetAllLEDs(ConfigSuccess ? LEDMASK_USB_READY : LEDMASK_USB_ERROR);
@@ -142,7 +141,7 @@ void EVENT_USB_Device_ConfigurationChanged(void)
  * descriptor is sent to the host. They where discovered by tracing output
  * from a Madcatz SF4 Joystick. Sending these bytes makes the PS button work.
  */
-static uint8_t PROGMEM magic_init_bytes[] =
+static const uint8_t PROGMEM magic_init_bytes[] =
 {
   0x21, 0x26, 0x01, 0x07, 0x00, 0x00, 0x00, 0x00
 };
@@ -207,7 +206,7 @@ void HID_Task(void)
 		GetNextReport(&JoystickReportData);
 
 		/* Write Joystick Report Data */
-		Endpoint_Write_Stream_LE(&JoystickReportData, sizeof(JoystickReportData));
+		Endpoint_Write_Stream_LE(&JoystickReportData, sizeof(JoystickReportData), NULL);
 
 		/* Finalize the stream transfer to send the last packet */
 		Endpoint_ClearIN();

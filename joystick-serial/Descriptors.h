@@ -56,7 +56,7 @@
 
 	/* Macros: */
 		/** Endpoint number of the Joystick HID reporting IN endpoint. */
-		#define JOYSTICK_EPNUM            1
+		#define JOYSTICK_EPNUM            (ENDPOINT_DIR_IN | 1)
 
 		/** Size in bytes of the Joystick HID reporting IN endpoint. */
 		#define JOYSTICK_EPSIZE           64
