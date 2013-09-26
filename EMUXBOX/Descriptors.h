@@ -55,16 +55,12 @@
 					
 	/* Macros: */
 		/** Endpoint number of the Xbox HID reporting IN endpoint. */
-		#define XBOX_IN_EPNUM            2
+		#define XBOX_IN_EPNUM            (ENDPOINT_DIR_IN | 2)
 
 		/** Endpoint number of the Xbox HID reporting OUT endpoint. */
-		#define XBOX_OUT_EPNUM           2
+		#define XBOX_OUT_EPNUM           (ENDPOINT_DIR_OUT | 2)
 		
 		/** Size in bytes of the Xbox HID reporting IN and OUT endpoints. */
 		#define XBOX_EPSIZE             32
-
-	/* Function Prototypes: */
-		uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue, const uint8_t wIndex, void** const DescriptorAddress, uint8_t* MemoryAddressSpace)
-											ATTR_WARN_UNUSED_RESULT ATTR_NON_NULL_PTR_ARG(3);
 
 #endif
