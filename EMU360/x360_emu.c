@@ -238,11 +238,6 @@ static unsigned short length;
  */
 void EVENT_USB_Device_ControlRequest(void)
 {
-  if(!Endpoint_IsSETUPReceived())
-  {
-    return;
-  }
-
   if(USB_ControlRequest.bmRequestType & REQTYPE_VENDOR)
   {
     if(!spoof_initialized)

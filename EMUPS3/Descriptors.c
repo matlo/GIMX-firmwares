@@ -167,7 +167,7 @@ const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 			.ConfigurationNumber    = 1,
 			.ConfigurationStrIndex  = NO_DESCRIPTOR,
 				
-			.ConfigAttributes       = USB_CONFIG_ATTR_BUSPOWERED,
+			.ConfigAttributes       = USB_CONFIG_ATTR_RESERVED,
 			
 			.MaxPowerConsumption    = USB_CONFIG_POWER_MA(500)
 		},
@@ -203,7 +203,7 @@ const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 		{
 			.Header                 = {.Size = sizeof(USB_Descriptor_Endpoint_t), .Type = DTYPE_Endpoint},
 
-			.EndpointAddress        = (ENDPOINT_DESCRIPTOR_DIR_OUT | SIXAXIS_OUT_EPNUM),
+			.EndpointAddress        = SIXAXIS_OUT_EPNUM,
 			.Attributes             = (EP_TYPE_INTERRUPT | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
 			.EndpointSize           = SIXAXIS_EPSIZE,
 			.PollingIntervalMS      = 0x01
@@ -213,7 +213,7 @@ const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 		{
 			.Header                 = {.Size = sizeof(USB_Descriptor_Endpoint_t), .Type = DTYPE_Endpoint},
 
-			.EndpointAddress        = (ENDPOINT_DESCRIPTOR_DIR_IN | SIXAXIS_IN_EPNUM),
+			.EndpointAddress        = SIXAXIS_IN_EPNUM,
 			.Attributes             = (EP_TYPE_INTERRUPT | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
 			.EndpointSize           = SIXAXIS_EPSIZE,
 			.PollingIntervalMS      = 0x01
@@ -259,7 +259,9 @@ const USB_Descriptor_String_t PROGMEM ProductString =
  *  is called so that the descriptor details can be passed back and the appropriate descriptor sent back to the
  *  USB host.
  */
-uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue, const uint8_t wIndex, void** const DescriptorAddress, uint8_t* MemoryAddressSpace)
+uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue,
+                                    const uint8_t wIndex,
+                                    const void** const DescriptorAddress)
 {
 	const uint8_t  DescriptorType   = (wValue >> 8);
 	const uint8_t  DescriptorNumber = (wValue & 0xFF);
@@ -272,12 +274,10 @@ uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue, const uint8_t wIndex,
 		case DTYPE_Device: 
 			Address = (void*)&DeviceDescriptor;
 			Size    = sizeof(USB_Descriptor_Device_t);
-			*MemoryAddressSpace = MEMSPACE_FLASH;
 			break;
 		case DTYPE_Configuration: 
 			Address = (void*)&ConfigurationDescriptor;
 			Size    = sizeof(USB_Descriptor_Configuration_t);
-			*MemoryAddressSpace = MEMSPACE_FLASH;
 			break;
 		case DTYPE_String: 
 			switch (DescriptorNumber)
@@ -295,17 +295,14 @@ uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue, const uint8_t wIndex,
 					Size    = pgm_read_byte(&ProductString.Header.Size);
 					break;
 			}
-			*MemoryAddressSpace = MEMSPACE_FLASH;
 			break;
 		case DTYPE_HID: 
 			Address = (void*)&ConfigurationDescriptor.SixaxisHID;
 			Size    = sizeof(USB_Descriptor_HID_t);
-			*MemoryAddressSpace = MEMSPACE_FLASH;
 			break;
 		case DTYPE_Report: 
 			Address = (void*)&SixaxisReport;
 			Size    = sizeof(SixaxisReport);
-			*MemoryAddressSpace = MEMSPACE_FLASH;
 			break;
 	}
 	

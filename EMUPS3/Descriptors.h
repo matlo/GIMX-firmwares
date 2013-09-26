@@ -72,15 +72,15 @@
 			USB_Descriptor_Interface_t            Interface;
 			USB_Descriptor_HID_t                  SixaxisHID;
 			USB_Descriptor_Endpoint_t             SixaxisOutEndpoint;
-	        USB_Descriptor_Endpoint_t             SixaxisInEndpoint;
+      USB_Descriptor_Endpoint_t             SixaxisInEndpoint;
 		} USB_Descriptor_Configuration_t;
 					
 	/* Macros: */
 		/** Endpoint number of the Sixaxis HID reporting IN endpoint. */
-		#define SIXAXIS_IN_EPNUM            1
+		#define SIXAXIS_IN_EPNUM            (ENDPOINT_DIR_IN | 1)
 
 		/** Endpoint number of the Sixaxis HID reporting OUT endpoint. */
-		#define SIXAXIS_OUT_EPNUM           2
+		#define SIXAXIS_OUT_EPNUM           (ENDPOINT_DIR_OUT | 2)
 		
 		/** Size in bytes of the Sixaxis HID reporting IN and OUT endpoints. */
 		#define SIXAXIS_EPSIZE             64
@@ -90,9 +90,5 @@
 		
 		/** Descriptor header type value, to indicate a HID class HID report descriptor. */
 		#define DTYPE_Report              0x22
-
-	/* Function Prototypes: */
-		uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue, const uint8_t wIndex, void** const DescriptorAddress, uint8_t* MemoryAddressSpace)
-											ATTR_WARN_UNUSED_RESULT ATTR_NON_NULL_PTR_ARG(3);
 
 #endif

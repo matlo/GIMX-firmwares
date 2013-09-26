@@ -37,6 +37,13 @@
 #include "sixaxis_emu.h"
 #include <LUFA/Drivers/Peripheral/Serial.h>
 
+#define USART_BAUDRATE 500000
+
+#define LED_PIN 6
+
+#define LED_ON (PORTD |= (1<<LED_PIN))
+#define LED_OFF (PORTD &= ~(1<<LED_PIN))
+
 /*
  * The master bdaddr.
  */
@@ -71,68 +78,15 @@ static uint8_t report[49] = {
 			0x01,0x9c,0x00,0x05
 };
 
-#define USART_BAUDRATE 500000
-#define BAUD_PRESCALE (((F_CPU / (USART_BAUDRATE * 16UL))) - 1)
-
 static uint8_t* pdata = report;
 static unsigned char i = 0;
 
-static unsigned char led = 0;
-static unsigned char j = 0;
-
-#define LED_ON (PORTD |= (1<<6))
-#define LED_OFF (PORTD &= ~(1<<6))
-
 static unsigned char sendReport = 0;
 
-void Serial_Task(void)
+static inline int16_t Serial_BlockingReceiveByte(void)
 {
-  if((UCSR1A & (1 << RXC1)))
-  {
-    while(i < sizeof(report))
-    {
-      pdata[i++] = Serial_RxByte();
-    }
-    i = 0;
-    sendReport = 1;
-    ++j;
-    if(!j)
-    {
-      if(led)
-      {
-        LED_OFF;
-        led = 0;
-      }
-      else
-      {
-        LED_ON;
-        led = 1;
-      }
-    }
-  }
-}
-
-/*ISR(USART1_RX_vect)
-{
-  pdata[i] = UDR1; // Fetch the received byte value
-  //UDR1 = pdata[i]; // Echo back the received byte back to the computer
-
-  i++;
-  i%=sizeof(report);
-}*/
-
-void serial_init(void)
-{
-   UBRR1H = (BAUD_PRESCALE >> 8); // Load upper 8-bits of the baud rate value into the high byte of the UBRR register
-   UBRR1L = BAUD_PRESCALE; // Load lower 8-bits of the baud rate value into the low byte of the UBRR register
-
-   UCSR1B |= (1 << RXEN1) | (1 << TXEN1); // Turn on the transmission and reception circuitry
-
-   UCSR1C |= _BV(UCSZ10) | _BV(UCSZ11); /* 8 bits per char */
-
-   //UCSR1B |= (1 << RXCIE1); // Enable the USART Receive Complete interrupt (USART_RXC)
-
-   return;
+  while(!Serial_IsCharReceived());
+  return UDR1;
 }
 
 /** Main program entry point. This routine configures the hardware required by the application, then
@@ -140,15 +94,33 @@ void serial_init(void)
  */
 int main(void)
 {
+  SetupHardware();
 
-	SetupHardware();
-	
-	for (;;)
-	{
-    Serial_Task();
-		HID_Task();
-		USB_USBTask();
-	}
+  GlobalInterruptEnable();
+
+  for (;;)
+  {
+    HID_Task();
+    USB_USBTask();
+  }
+}
+
+ISR(USART1_RX_vect)
+{
+  pdata[i++] = UDR1;
+  while(i < sizeof(report))
+  {
+    pdata[i++] = Serial_BlockingReceiveByte();
+  }
+  i = 0;
+  sendReport = 1;
+}
+
+void serial_init(void)
+{
+  Serial_Init(USART_BAUDRATE, false);
+
+  UCSR1B |= (1 << RXCIE1); // Enable the USART Receive Complete interrupt (USART_RXC)
 }
 
 /** Configures the board hardware and chip peripherals for the demo's functionality. */
@@ -165,7 +137,8 @@ void SetupHardware(void)
 
 	/* Hardware Initialization */
 	//LEDs_Init();
-  DDRD |= (1<<6);
+  DDRD |= (1<<LED_PIN);
+
   USB_Init();
 }
 
@@ -196,17 +169,13 @@ void EVENT_USB_Device_ConfigurationChanged(void)
 	LEDs_SetAllLEDs(LEDMASK_USB_READY);
 
 	/* Setup IN Report Endpoint */
-	if (!(Endpoint_ConfigureEndpoint(SIXAXIS_IN_EPNUM, EP_TYPE_INTERRUPT,
-		                             ENDPOINT_DIR_IN, SIXAXIS_EPSIZE,
-	                                 ENDPOINT_BANK_SINGLE)))
+	if (!(Endpoint_ConfigureEndpoint(SIXAXIS_IN_EPNUM, EP_TYPE_INTERRUPT, SIXAXIS_EPSIZE, 1)))
 	{
 		LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
 	}
 	
 	/* Setup OUT LED Report Endpoint */
-	if (!(Endpoint_ConfigureEndpoint(SIXAXIS_OUT_EPNUM, EP_TYPE_INTERRUPT,
-		                             ENDPOINT_DIR_OUT, SIXAXIS_EPSIZE,
-	                                 ENDPOINT_BANK_SINGLE)))
+	if (!(Endpoint_ConfigureEndpoint(SIXAXIS_OUT_EPNUM, EP_TYPE_INTERRUPT, SIXAXIS_EPSIZE, 1)))
 	{
 		LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
 	}
@@ -284,11 +253,11 @@ const char PROGMEM buf3f7[] = {
     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 };
 
-/** Event handler for the USB_UnhandledControlRequest event. This is used to catch standard and class specific
- *  control requests that are not handled internally by the USB library (including the HID commands, which are
- *  all issued via the control endpoint), so that they can be handled appropriately for the application.
+/** Event handler for the USB_ControlRequest event. This is used to catch and process control requests sent to
+ *  the device from the USB host before passing along unhandled control requests to the library for processing
+ *  internally.
  */
-void EVENT_USB_Device_UnhandledControlRequest(void)
+void EVENT_USB_Device_ControlRequest(void)
 {
   static char buffer[64];
 
@@ -351,25 +320,10 @@ void EVENT_USB_Device_UnhandledControlRequest(void)
 		case REQ_SetReport:
 			if (USB_ControlRequest.bmRequestType == (REQDIR_HOSTTODEVICE | REQTYPE_CLASS | REQREC_INTERFACE))
 			{
-				uint8_t i;
 				Endpoint_ClearSETUP();
 				
-				/* Wait until the LED report has been sent by the host */
-				while (!(Endpoint_IsOUTReceived()))
-				{
-					if (USB_DeviceState == DEVICE_STATE_Unattached)
-					  return;
-				}
-
-				for(i=0; i<USB_ControlRequest.wLength; i++)
-				{
-					buffer[i] = Endpoint_Read_Byte();
-				}
-
-				/* Clear the endpoint data */
-				Endpoint_ClearOUT();
-
-				Endpoint_ClearStatusStage();
+				Endpoint_Read_Control_Stream_LE(buffer, USB_ControlRequest.wLength);
+				Endpoint_ClearIN();
 
 				if(USB_ControlRequest.wValue == 0x03f5)
 				{
@@ -405,7 +359,7 @@ void SendNextReport(void)
     while (!Endpoint_IsINReady()) {}
 
 		/* Write IN Report Data */
-		Endpoint_Write_Stream_LE(report, sizeof(report));
+		Endpoint_Write_Stream_LE(report, sizeof(report), NULL);
 		
 		sendReport = 0;
 
@@ -427,7 +381,7 @@ void ReceiveNextReport(void)
 		if (Endpoint_IsReadWriteAllowed())
 		{
 			/* Discard data */
-			Endpoint_Discard_Byte();
+			Endpoint_Discard_8();
 		}
 
 		/* Handshake the OUT Endpoint - clear endpoint and ready for next report */
