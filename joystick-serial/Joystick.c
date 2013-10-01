@@ -1,13 +1,13 @@
 /*
-             LUFA Library
-     Copyright (C) Dean Camera, 2010.
+  Copyright 2013  Mathieu Laurendeau (mat.lau [at] laposte [dot] net)
 
-  dean [at] fourwalledcubicle [dot] com
-           www.lufa-lib.org
-*/
+  Redistributed under the GPLv3 licence.
 
-/*
-  Copyright 2010  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Based on code by
+    Denver Gingerich (denver [at] ossguy [dot] com)
+    Dean Camera (dean [at] fourwalledcubicle [dot] com)
+
+  Original licence:
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -36,13 +36,9 @@
 
 #include "Joystick.h"
 #include <LUFA/Drivers/Peripheral/Serial.h>
+#include "../adapter_protocol.h"
 
 #define USART_BAUDRATE 500000
-
-#define LED_PIN 6
-
-#define LED_ON (PORTD |= (1<<LED_PIN))
-#define LED_OFF (PORTD &= ~(1<<LED_PIN))
 
 /*
  * The reference report data.
@@ -57,10 +53,16 @@ static uint8_t report[12] =
     0x00,0x00,//buttons
 };
 
-static uint8_t* pdata = report;
+static uint8_t* pdata;
 static unsigned char i = 0;
 
-static unsigned char sendReport = 0;
+/*
+ * These variables are used in both the main and serial interrupt,
+ * therefore they have to be declared as volatile.
+ */
+static volatile unsigned char sendReport = 0;
+static volatile unsigned char packet_type = 0;
+static volatile unsigned char value_len = 0;
 
 static inline int16_t Serial_BlockingReceiveByte(void)
 {
@@ -75,8 +77,6 @@ int main(void)
 {
 	SetupHardware();
 
-  GlobalInterruptEnable();
-
 	for (;;)
 	{
 		HID_Task();
@@ -84,15 +84,48 @@ int main(void)
 	}
 }
 
+static inline void handle_packet(void)
+{
+  switch(packet_type)
+  {
+    case BYTE_TYPE:
+      Serial_SendByte(BYTE_TYPE);
+      Serial_SendByte(BYTE_LEN_1_BYTE);
+      Serial_SendByte(BYTE_TYPE_JOYSTICK);
+      break;
+    case BYTE_STATUS:
+      break;
+    case BYTE_START_SPOOF:
+      break;
+    case BYTE_SPOOF_DATA:
+      break;
+    case BYTE_SEND_REPORT:
+      sendReport = 1;
+      //no answer
+      break;
+  }
+}
+
+static unsigned char buf[64];
+
 ISR(USART1_RX_vect)
 {
-  pdata[i++] = UDR1;
-  while(i < sizeof(report))
+  packet_type = UDR1;
+  value_len = Serial_BlockingReceiveByte();
+  if(packet_type == BYTE_SEND_REPORT)
+  {
+    pdata = report;
+  }
+  else
+  {
+    pdata = buf;
+  }
+  while(i < value_len)
   {
     pdata[i++] = Serial_BlockingReceiveByte();
   }
   i = 0;
-  sendReport = 1;
+  handle_packet();
 }
 
 void serial_init(void)
@@ -114,9 +147,10 @@ void SetupHardware(void)
 
 	serial_init();
 
+  GlobalInterruptEnable();
+
 	/* Hardware Initialization */
-  //LEDs_Init();
-  DDRD |= (1<<LED_PIN);
+	LEDs_Init();
 
 	USB_Init();
 }
@@ -127,7 +161,7 @@ void SetupHardware(void)
 void EVENT_USB_Device_Connect(void)
 {
 	/* Indicate USB enumerating */
-	LEDs_SetAllLEDs(LEDMASK_USB_ENUMERATING);
+	//LEDs_SetAllLEDs(LEDMASK_USB_ENUMERATING);
 }
 
 /** Event handler for the USB_Disconnect event. This indicates that the device is no longer connected to a host via
@@ -136,7 +170,7 @@ void EVENT_USB_Device_Connect(void)
 void EVENT_USB_Device_Disconnect(void)
 {
 	/* Indicate USB not ready */
-	LEDs_SetAllLEDs(LEDMASK_USB_NOTREADY);
+	//LEDs_SetAllLEDs(LEDMASK_USB_NOTREADY);
 }
 
 /** Event handler for the USB_ConfigurationChanged event. This is fired when the host set the current configuration
@@ -150,7 +184,7 @@ void EVENT_USB_Device_ConfigurationChanged(void)
 	ConfigSuccess &= Endpoint_ConfigureEndpoint(JOYSTICK_EPNUM, EP_TYPE_INTERRUPT, JOYSTICK_EPSIZE, 1);
 
 	/* Indicate endpoint configuration success or failure */
-	LEDs_SetAllLEDs(ConfigSuccess ? LEDMASK_USB_READY : LEDMASK_USB_ERROR);
+	//LEDs_SetAllLEDs(ConfigSuccess ? LEDMASK_USB_READY : LEDMASK_USB_ERROR);
 }
 
 /*
