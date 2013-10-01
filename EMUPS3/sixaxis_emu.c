@@ -36,13 +36,9 @@
  
 #include "sixaxis_emu.h"
 #include <LUFA/Drivers/Peripheral/Serial.h>
+#include "../adapter_protocol.h"
 
 #define USART_BAUDRATE 500000
-
-#define LED_PIN 6
-
-#define LED_ON (PORTD |= (1<<LED_PIN))
-#define LED_OFF (PORTD &= ~(1<<LED_PIN))
 
 /*
  * The master bdaddr.
@@ -78,10 +74,16 @@ static uint8_t report[49] = {
 			0x01,0x9c,0x00,0x05
 };
 
-static uint8_t* pdata = report;
+static uint8_t* pdata;
 static unsigned char i = 0;
 
-static unsigned char sendReport = 0;
+/*
+ * These variables are used in both the main and serial interrupt,
+ * therefore they have to be declared as volatile.
+ */
+static volatile unsigned char sendReport = 0;
+static volatile unsigned char packet_type = 0;
+static volatile unsigned char value_len = 0;
 
 static inline int16_t Serial_BlockingReceiveByte(void)
 {
@@ -96,8 +98,6 @@ int main(void)
 {
   SetupHardware();
 
-  GlobalInterruptEnable();
-
   for (;;)
   {
     HID_Task();
@@ -105,15 +105,48 @@ int main(void)
   }
 }
 
+static inline void handle_packet(void)
+{
+  switch(packet_type)
+  {
+    case BYTE_TYPE:
+      Serial_SendByte(BYTE_TYPE);
+      Serial_SendByte(BYTE_LEN_1_BYTE);
+      Serial_SendByte(BYTE_TYPE_SIXAXIS);
+      break;
+    case BYTE_STATUS:
+      break;
+    case BYTE_START_SPOOF:
+      break;
+    case BYTE_SPOOF_DATA:
+      break;
+    case BYTE_SEND_REPORT:
+      sendReport = 1;
+      //no answer
+      break;
+  }
+}
+
+static unsigned char buf[64];
+
 ISR(USART1_RX_vect)
 {
-  pdata[i++] = UDR1;
-  while(i < sizeof(report))
+  packet_type = UDR1;
+  value_len = Serial_BlockingReceiveByte();
+  if(packet_type == BYTE_SEND_REPORT)
+  {
+    pdata = report;
+  }
+  else
+  {
+    pdata = buf;
+  }
+  while(i < value_len)
   {
     pdata[i++] = Serial_BlockingReceiveByte();
   }
   i = 0;
-  sendReport = 1;
+  handle_packet();
 }
 
 void serial_init(void)
@@ -135,9 +168,10 @@ void SetupHardware(void)
 
   serial_init();
 
+  GlobalInterruptEnable();
+
 	/* Hardware Initialization */
-	//LEDs_Init();
-  DDRD |= (1<<LED_PIN);
+	LEDs_Init();
 
   USB_Init();
 }
@@ -148,7 +182,7 @@ void SetupHardware(void)
 void EVENT_USB_Device_Connect(void)
 {
 	/* Indicate USB enumerating */
-	LEDs_SetAllLEDs(LEDMASK_USB_ENUMERATING);
+	//LEDs_SetAllLEDs(LEDMASK_USB_ENUMERATING);
 }
 
 /** Event handler for the USB_Disconnect event. This indicates that the device is no longer connected to a host via
@@ -157,7 +191,7 @@ void EVENT_USB_Device_Connect(void)
 void EVENT_USB_Device_Disconnect(void)
 {
 	/* Indicate USB not ready */
-	LEDs_SetAllLEDs(LEDMASK_USB_NOTREADY);
+	//LEDs_SetAllLEDs(LEDMASK_USB_NOTREADY);
 }
 
 /** Event handler for the USB_ConfigurationChanged event. This is fired when the host sets the current configuration
@@ -165,19 +199,16 @@ void EVENT_USB_Device_Disconnect(void)
  */
 void EVENT_USB_Device_ConfigurationChanged(void)
 {	
-	/* Indicate USB connected and ready */
-	LEDs_SetAllLEDs(LEDMASK_USB_READY);
+	//LEDs_SetAllLEDs(LEDMASK_USB_READY);
 
-	/* Setup IN Report Endpoint */
 	if (!(Endpoint_ConfigureEndpoint(SIXAXIS_IN_EPNUM, EP_TYPE_INTERRUPT, SIXAXIS_EPSIZE, 1)))
 	{
-		LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
+		//LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
 	}
 	
-	/* Setup OUT LED Report Endpoint */
 	if (!(Endpoint_ConfigureEndpoint(SIXAXIS_OUT_EPNUM, EP_TYPE_INTERRUPT, SIXAXIS_EPSIZE, 1)))
 	{
-		LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
+		//LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
 	}
 	
 	//USB_Device_EnableSOFEvents();
@@ -321,7 +352,6 @@ void EVENT_USB_Device_ControlRequest(void)
 			if (USB_ControlRequest.bmRequestType == (REQDIR_HOSTTODEVICE | REQTYPE_CLASS | REQREC_INTERFACE))
 			{
 				Endpoint_ClearSETUP();
-				
 				Endpoint_Read_Control_Stream_LE(buffer, USB_ControlRequest.wLength);
 				Endpoint_ClearIN();
 
