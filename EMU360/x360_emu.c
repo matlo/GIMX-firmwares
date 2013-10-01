@@ -37,24 +37,9 @@
 #include "x360_emu.h"
 #include <LUFA/Drivers/Peripheral/Serial.h>
 #include <avr/wdt.h>
-
-#define BYTE_TYPE        0x11
-#define BYTE_STATUS      0x22
-#define BYTE_START_SPOOF 0x33
-#define BYTE_SPOOF_DATA  0x44
-#define BYTE_SEND_REPORT 0xff
-
-#define BYTE_TYPE_X360       0x01
-#define BYTE_STATUS_NSPOOFED 0x00
-#define BYTE_STATUS_SPOOFED  0x01
-
-#define BYTE_LEN_1_BYTE 0x01
+#include "../adapter_protocol.h"
 
 #define USART_BAUDRATE 500000
-
-static unsigned char response = 0;
-
-static unsigned char buf[64];
 
 /*
  * The reference report data.
@@ -155,6 +140,8 @@ static inline void handle_packet(void)
   }
 }
 
+static unsigned char buf[64];
+
 ISR(USART1_RX_vect)
 {
   packet_type = UDR1;
@@ -242,6 +229,8 @@ void EVENT_USB_Device_ConfigurationChanged(void)
   //USB_Device_EnableSOFEvents();
 }
 
+static unsigned char response = 0;
+
 /** Event handler for the USB_ControlRequest event. This is used to catch and process control requests sent to
  *  the device from the USB host before passing along unhandled control requests to the library for processing
  *  internally.
@@ -258,7 +247,7 @@ void EVENT_USB_Device_ControlRequest(void)
         Endpoint_Read_Control_Stream_LE(buf, USB_ControlRequest.wLength);
         Endpoint_ClearIN();
       }
-      packet_type = 0x00;
+      packet_type = BYTE_NO_PACKET;
       send_spoof_header();
       if( USB_ControlRequest.bmRequestType & REQDIR_DEVICETOHOST )
       {
