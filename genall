@@ -22,11 +22,12 @@ for FIRMWARE in $FIRMWARES
 do
   mkdir firmwares/$FIRMWARE
   cd $FIRMWARE
+  make clean
   for TARGET in $TARGETS
   do
-    make clean
     make MCU=$TARGET
     mv *.hex ../firmwares/$FIRMWARE/$TARGET.hex
+    make clean
   done
   cd ..
 done
