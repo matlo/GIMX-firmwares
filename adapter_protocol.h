@@ -18,6 +18,8 @@
 #define BYTE_TYPE_SIXAXIS    0x02
 #define BYTE_TYPE_PS2        0x03
 #define BYTE_TYPE_XBOX       0x04
+#define BYTE_TYPE_DS4        0x05
+#define BYTE_TYPE_XBOXONE    0x06
 
 #define BYTE_STATUS_NSPOOFED 0x00
 #define BYTE_STATUS_SPOOFED  0x01
