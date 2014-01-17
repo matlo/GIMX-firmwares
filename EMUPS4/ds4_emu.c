@@ -46,6 +46,11 @@
 static uint8_t masterBdaddr[6];
 
 /*
+ * The link key.
+ */
+static uint8_t linkKey[16];
+
+/*
  * A byte to save.
  */
 static uint8_t byte_6_ef;
@@ -233,8 +238,11 @@ const char PROGMEM buf02[] = {
 };
 
 const char PROGMEM buf12[] = {
-  0x12, 0x8B, 0x09, 0x07, 0x6D, 0x66, 0x1C, 0x08,
-  0x25, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+  0x12,
+  0x8B, 0x09, 0x07, 0x6D, 0x66, 0x1C,//slave bdaddr
+  0x08, 0x25,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00,//master bdaddr
+  0x00
 };
 
 /** Event handler for the USB_ControlRequest event. This is used to catch and process control requests sent to
@@ -244,6 +252,7 @@ const char PROGMEM buf12[] = {
 void EVENT_USB_Device_ControlRequest(void)
 {
   static char buffer[64];
+  unsigned char len;
 
   /* Handle HID Class specific requests */
 	switch (USB_ControlRequest.bRequest)
@@ -253,15 +262,18 @@ void EVENT_USB_Device_ControlRequest(void)
 			{
         if(USB_ControlRequest.wValue == 0x0301)
         {
-          memcpy_P(buffer, bufa3, sizeof(buffer));
+          memcpy_P(buffer, bufa3, sizeof(bufa3));
+          len = sizeof(bufa3);
         }
-        else if(USB_ControlRequest.wValue == 0x03f2)
+        else if(USB_ControlRequest.wValue == 0x0302)
         {
-          memcpy_P(buffer, buf02, sizeof(buffer));
+          memcpy_P(buffer, buf02, sizeof(buf02));
+          len = sizeof(buf02);
         }
-        else if(USB_ControlRequest.wValue == 0x03f5)
+        else if(USB_ControlRequest.wValue == 0x0312)
         {
-          memcpy_P(buffer, buf12, sizeof(buffer));
+          memcpy_P(buffer, buf12, sizeof(buf12));
+          len = sizeof(buf12);
           if(reply == 0)
           {
             /*
@@ -274,12 +286,8 @@ void EVENT_USB_Device_ControlRequest(void)
             /*
              * Next requests, tell that the bdaddr is the one of the PS4.
              */
-            memcpy(buffer+10, masterBdaddr, 6);
+            memcpy(buffer+9, masterBdaddr, 6);
           }
-        }
-        else if(USB_ControlRequest.wValue == 0x03ef)
-        {
-          memcpy_P(buffer, buf13, sizeof(buffer));
         }
         else
         {
@@ -298,10 +306,16 @@ void EVENT_USB_Device_ControlRequest(void)
 				Endpoint_Read_Control_Stream_LE(buffer, USB_ControlRequest.wLength);
 				Endpoint_ClearIN();
 
-				if(USB_ControlRequest.wValue == 0x03f5)
+				if(USB_ControlRequest.wValue == 0x0313)
 				{
-					memcpy(masterBdaddr, buffer+1, 6);
+					memcpy(masterBdaddr, buffer+1, sizeof(masterBdaddr));
+					memcpy(linkKey, buffer+7, sizeof(linkKey));
+					Serial_SendData(linkKey, sizeof(linkKey));
 				}
+        if(USB_ControlRequest.wValue == 0x0314)
+        {
+          //anything to do there?
+        }
 			}
 			
 			break;
