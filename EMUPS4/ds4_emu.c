@@ -51,11 +51,6 @@ static uint8_t masterBdaddr[6];
 static uint8_t linkKey[16];
 
 /*
- * A byte to save.
- */
-static uint8_t byte_6_ef;
-
-/*
  * Indicates if the master bdaddr was already requested or not.
  */
 static unsigned char reply = 0;
@@ -286,7 +281,7 @@ void EVENT_USB_Device_ControlRequest(void)
             /*
              * Next requests, tell that the bdaddr is the one of the PS4.
              */
-            memcpy(buffer+9, masterBdaddr, 6);
+            memcpy(buffer+10, masterBdaddr, 6);
           }
         }
         else
@@ -294,7 +289,7 @@ void EVENT_USB_Device_ControlRequest(void)
           break;
         }
         Endpoint_ClearSETUP();
-        Endpoint_Write_Control_Stream_LE(buffer, USB_ControlRequest.wLength);
+        Endpoint_Write_Control_Stream_LE(buffer, len);
         Endpoint_ClearOUT();
 			}
 		
