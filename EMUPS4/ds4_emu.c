@@ -40,15 +40,23 @@
 
 #define USART_BAUDRATE 500000
 
-/*
- * The master bdaddr.
- */
-static uint8_t masterBdaddr[6];
+uint8_t EEMEM eeSlaveBdaddr[6] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
+uint8_t EEMEM eeMasterBdaddr[6] = {0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C};
+uint8_t EEMEM eeLinkKey[16] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
+
+uint8_t slaveBdaddr[6];
+uint8_t masterBdaddr[6];
+uint8_t linkKey[16];
 
 /*
- * The link key.
+ * Read data from the eeprom.
  */
-static uint8_t linkKey[16];
+void readEepromData(void)
+{
+  eeprom_read_block((void*)&slaveBdaddr, (const void*)&eeSlaveBdaddr, sizeof(slaveBdaddr));
+  eeprom_read_block((void*)&masterBdaddr, (const void*)&eeMasterBdaddr, sizeof(masterBdaddr));
+  eeprom_read_block((void*)&linkKey, (const void*)&eeLinkKey, sizeof(linkKey));
+}
 
 /*
  * Indicates if the master bdaddr was already requested or not.
@@ -96,6 +104,8 @@ static inline int16_t Serial_BlockingReceiveByte(void)
  */
 int main(void)
 {
+  readEepromData();
+
   SetupHardware();
 
   for (;;)
@@ -234,7 +244,7 @@ const char PROGMEM buf02[] = {
 
 const char PROGMEM buf12[] = {
   0x12,
-  0x8B, 0x09, 0x07, 0x6D, 0x66, 0x1C,//slave bdaddr
+  0x66, 0x55, 0x44, 0x33, 0x22, 0x11,//slave bdaddr
   0x08, 0x25,
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00,//master bdaddr
   0x00
@@ -269,6 +279,7 @@ void EVENT_USB_Device_ControlRequest(void)
         {
           memcpy_P(buffer, buf12, sizeof(buf12));
           len = sizeof(buf12);
+          memcpy(buffer+1, slaveBdaddr, sizeof(slaveBdaddr));
           if(reply == 0)
           {
             /*
@@ -281,8 +292,17 @@ void EVENT_USB_Device_ControlRequest(void)
             /*
              * Next requests, tell that the bdaddr is the one of the PS4.
              */
-            memcpy(buffer+10, masterBdaddr, 6);
+            memcpy(buffer+10, masterBdaddr, sizeof(masterBdaddr));
           }
+        }
+        /*
+         * Not in the original DS4.
+         * Added for getting the link key.
+         */
+        else if(USB_ControlRequest.wValue == 0x0313)
+        {
+          memcpy(buffer, linkKey, sizeof(linkKey));
+          len = sizeof(linkKey);
         }
         else
         {
@@ -305,7 +325,8 @@ void EVENT_USB_Device_ControlRequest(void)
 				{
 					memcpy(masterBdaddr, buffer+1, sizeof(masterBdaddr));
 					memcpy(linkKey, buffer+7, sizeof(linkKey));
-					Serial_SendData(linkKey, sizeof(linkKey));
+					eeprom_write_block(masterBdaddr, &eeMasterBdaddr, sizeof(masterBdaddr));
+					eeprom_write_block(linkKey, &eeLinkKey, sizeof(linkKey));
 				}
         if(USB_ControlRequest.wValue == 0x0314)
         {
