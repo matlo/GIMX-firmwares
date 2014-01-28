@@ -265,7 +265,7 @@ void EVENT_USB_Device_ControlRequest(void)
 		case REQ_GetReport:
 			if (USB_ControlRequest.bmRequestType == (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_INTERFACE))
 			{
-        if(USB_ControlRequest.wValue == 0x0301)
+        if(USB_ControlRequest.wValue == 0x03a3)
         {
           memcpy_P(buffer, bufa3, sizeof(bufa3));
           len = sizeof(bufa3);
