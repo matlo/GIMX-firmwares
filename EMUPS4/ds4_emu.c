@@ -321,14 +321,19 @@ void EVENT_USB_Device_ControlRequest(void)
 				Endpoint_Read_Control_Stream_LE(buffer, USB_ControlRequest.wLength);
 				Endpoint_ClearIN();
 
-				if(USB_ControlRequest.wValue == 0x0313)
+				if(USB_ControlRequest.wValue == 0x0312)
 				{
-					memcpy(masterBdaddr, buffer+1, sizeof(masterBdaddr));
-					memcpy(linkKey, buffer+7, sizeof(linkKey));
-					eeprom_write_block(masterBdaddr, &eeMasterBdaddr, sizeof(masterBdaddr));
-					eeprom_write_block(linkKey, &eeLinkKey, sizeof(linkKey));
+					memcpy(slaveBdaddr, buffer, sizeof(slaveBdaddr));
+					eeprom_write_block(slaveBdaddr, &eeSlaveBdaddr, sizeof(slaveBdaddr));
 				}
-        if(USB_ControlRequest.wValue == 0x0314)
+				else if(USB_ControlRequest.wValue == 0x0313)
+        {
+          memcpy(masterBdaddr, buffer+1, sizeof(masterBdaddr));
+          memcpy(linkKey, buffer+7, sizeof(linkKey));
+          eeprom_write_block(masterBdaddr, &eeMasterBdaddr, sizeof(masterBdaddr));
+          eeprom_write_block(linkKey, &eeLinkKey, sizeof(linkKey));
+        }
+				else if(USB_ControlRequest.wValue == 0x0314)
         {
           //anything to do there?
         }
