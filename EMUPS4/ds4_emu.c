@@ -41,8 +41,8 @@
 #define USART_BAUDRATE 500000
 
 uint8_t EEMEM eeSlaveBdaddr[6] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
-uint8_t EEMEM eeMasterBdaddr[6] = {0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C};
-uint8_t EEMEM eeLinkKey[16] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
+uint8_t EEMEM eeMasterBdaddr[6] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+uint8_t EEMEM eeLinkKey[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 uint8_t slaveBdaddr[6];
 uint8_t masterBdaddr[6];
@@ -57,11 +57,6 @@ void readEepromData(void)
   eeprom_read_block((void*)&masterBdaddr, (const void*)&eeMasterBdaddr, sizeof(masterBdaddr));
   eeprom_read_block((void*)&linkKey, (const void*)&eeLinkKey, sizeof(linkKey));
 }
-
-/*
- * Indicates if the master bdaddr was already requested or not.
- */
-static unsigned char reply = 0;
 
 /*
  * The reference report data.
@@ -280,27 +275,14 @@ void EVENT_USB_Device_ControlRequest(void)
           memcpy_P(buffer, buf12, sizeof(buf12));
           len = sizeof(buf12);
           memcpy(buffer+1, slaveBdaddr, sizeof(slaveBdaddr));
-          if(reply == 0)
-          {
-            /*
-             * First request, tell that the bdaddr is not the one of the PS4.
-             */
-            reply = 1;
-          }
-          else
-          {
-            /*
-             * Next requests, tell that the bdaddr is the one of the PS4.
-             */
-            memcpy(buffer+10, masterBdaddr, sizeof(masterBdaddr));
-          }
+          memcpy(buffer+10, masterBdaddr, sizeof(masterBdaddr));
         }
-        /*
-         * Not in the original DS4.
-         * Added for getting the link key.
-         */
         else if(USB_ControlRequest.wValue == 0x0313)
         {
+          /*
+           * Not in the original DS4.
+           * Added for getting the link key.
+           */
           memcpy(buffer, linkKey, sizeof(linkKey));
           len = sizeof(linkKey);
         }
@@ -323,6 +305,10 @@ void EVENT_USB_Device_ControlRequest(void)
 
 				if(USB_ControlRequest.wValue == 0x0312)
 				{
+          /*
+           * Not in the original DS4.
+           * Added for setting the slave bdaddr.
+           */
 					memcpy(slaveBdaddr, buffer, sizeof(slaveBdaddr));
 					eeprom_write_block(slaveBdaddr, &eeSlaveBdaddr, sizeof(slaveBdaddr));
 				}

@@ -275,6 +275,14 @@ const USB_Descriptor_HIDReport_Datatype_t PROGMEM Ds4Report[] =
     0x09, 0x54,        //   Usage (0x54)
     0x95, 0x3F,        //   Report Count (63)
     0xB1, 0x02,        //   Feature (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
+    0x85, 0xB1,        //   Report ID (177)
+    0x09, 0x55,        //   Usage (0x55)
+    0x95, 0x02,        //   Report Count (2)
+    0xB1, 0x02,        //   Feature (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
+    0x85, 0xB2,        //   Report ID (178)
+    0x09, 0x56,        //   Usage (0x56)
+    0x95, 0x02,        //   Report Count (2)
+    0xB1, 0x02,        //   Feature (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
     0xC0,              // End Collection
 };
 
@@ -347,7 +355,7 @@ const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 		{  
 			.Header                 = {.Size = sizeof(USB_Descriptor_HID_t), .Type = DTYPE_HID},
 			
-			.HIDSpec                = 0x0117,
+			.HIDSpec                = 0x0111,
 			.CountryCode            = 0x00,
 			.TotalReportDescriptors = 1,
 			.HIDReportType          = DTYPE_Report,
