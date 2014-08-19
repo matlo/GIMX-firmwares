@@ -1,6 +1,7 @@
 #!/bin/bash
 
 FIRMWARES="
+EMUPS4
 EMU360
 EMUPS3
 EMUXBOX
