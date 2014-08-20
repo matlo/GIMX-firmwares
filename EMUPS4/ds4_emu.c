@@ -55,14 +55,16 @@ static uint8_t report[] = {
     0x00, 0x00, //10 MSB = 10 buttons, 6 LSB = vendor defined
     0x00, 0x00, //Rx, Ry
     //The rest of the report is unknown.
-    0x93, 0x5F, 0xFB, 0xD2, 0xFF, 0xDA,
-    0xFF, 0xD8, 0xFF, 0x4F, 0xEE, 0x14, 0x1B, 0x99,
-    0xFE, 0x00, 0x00, 0x00, 0x00, 0x00, 0x05, 0x00,
+    0x99, 0x50, 0xFF, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0xe7, 0xff, 0x6e, 0x20, 0xd9,
+    0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0x00,
     0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x80,
     0x00, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00,
     0x80, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00,
     0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00
 };
+
+static unsigned char ready = 0;
 
 static uint8_t* pdata;
 static unsigned char i = 0;
@@ -158,7 +160,6 @@ static unsigned char buf[64];
 
 ISR(USART1_RX_vect)
 {
-  LED_ON;
   packet_type = UDR1;
   value_len = Serial_BlockingReceiveByte();
   if(packet_type == BYTE_SEND_REPORT)
@@ -175,7 +176,6 @@ ISR(USART1_RX_vect)
   }
   i = 0;
   handle_packet();
-  LED_OFF;
 }
 
 void serial_init(void)
@@ -280,6 +280,7 @@ void EVENT_USB_Device_ControlRequest(void)
           Endpoint_ClearSETUP();
           Endpoint_Write_Control_Stream_LE(buffer, len);
           Endpoint_ClearOUT();
+          ready = 1;
         }
         else if(USB_ControlRequest.wValue == 0x03f3)
         {
@@ -317,7 +318,6 @@ void EVENT_USB_Device_ControlRequest(void)
 			}
 			
 			break;
-
 	}
 }
 
@@ -334,7 +334,7 @@ void SendNextReport(void)
 	/* Select the IN Report Endpoint */
 	Endpoint_SelectEndpoint(DS4_IN_EPNUM);
 
-  if (sendReport)
+  if (ready && sendReport)
   {
     /* Wait until the host is ready to accept another packet */
     while (!Endpoint_IsINReady()) {}
