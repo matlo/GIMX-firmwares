@@ -327,6 +327,10 @@ void EVENT_USB_Device_ControlRequest(void)
 	// One millisecond has elapsed.
 }*/
 
+#ifdef REPORT_NB_INFO
+static unsigned char nbReports = 0;
+static unsigned char info[] = { BYTE_INFO, BYTE_LEN_0_BYTE };
+#endif
 
 /** Sends the next HID report to the host, via the IN endpoint. */
 void SendNextReport(void)
@@ -346,6 +350,13 @@ void SendNextReport(void)
 
 		/* Finalize the stream transfer to send the last packet */
 		Endpoint_ClearIN();
+
+#ifdef REPORT_NB_INFO
+		nbReports++;
+		if(!nbReports) {
+      Serial_SendData(info, sizeof(info));
+		}
+#endif
 	}
 }
 
