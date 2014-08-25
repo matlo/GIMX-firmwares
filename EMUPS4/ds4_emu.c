@@ -329,7 +329,7 @@ void EVENT_USB_Device_ControlRequest(void)
 
 #ifdef REPORT_NB_INFO
 static unsigned char nbReports = 0;
-static unsigned char info[] = { BYTE_INFO, BYTE_LEN_0_BYTE };
+static unsigned char info[] = { BYTE_DEBUG, BYTE_LEN_0_BYTE };
 #endif
 
 /** Sends the next HID report to the host, via the IN endpoint. */
