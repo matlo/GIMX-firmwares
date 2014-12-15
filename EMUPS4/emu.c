@@ -370,7 +370,7 @@ void ReceiveNextReport(void)
       unsigned char type;
       unsigned char length;
     } header;
-    unsigned char buffer[64];
+    unsigned char buffer[EPSIZE];
   } packet = { .header.type = BYTE_OUT_REPORT };
 
   uint16_t length = 0;
