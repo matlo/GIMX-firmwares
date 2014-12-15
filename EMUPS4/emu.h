@@ -31,11 +31,11 @@
 
 /** \file
  *
- *  Header file for ds4_emu.c.
+ *  Header file for emu.c.
  */
 
-#ifndef _DS4_PAIR_EMU_H_
-#define _DS4_PAIR_EMU_H_
+#ifndef _EMU_H_
+#define _EMU_H_
 
 	/* Includes: */
 		#include <avr/io.h>

@@ -30,11 +30,11 @@
 
 /** \file
  *
- *  Main source file for the ds4 controller. This file contains the main tasks and
+ *  Main source file for the controller. This file contains the main tasks and
  *  is responsible for the initial application hardware configuration.
  */
  
-#include "ds4_emu.h"
+#include "emu.h"
 #include <LUFA/Drivers/Peripheral/Serial.h>
 #include "../adapter_protocol.h"
 
@@ -234,12 +234,12 @@ void EVENT_USB_Device_ConfigurationChanged(void)
 {	
 	//LEDs_SetAllLEDs(LEDMASK_USB_READY);
 
-	if (!(Endpoint_ConfigureEndpoint(DS4_IN_EPNUM, EP_TYPE_INTERRUPT, DS4_EPSIZE, 1)))
+	if (!(Endpoint_ConfigureEndpoint(IN_EPNUM, EP_TYPE_INTERRUPT, EPSIZE, 1)))
 	{
 		//LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
 	}
 	
-	if (!(Endpoint_ConfigureEndpoint(DS4_OUT_EPNUM, EP_TYPE_INTERRUPT, DS4_EPSIZE, 1)))
+	if (!(Endpoint_ConfigureEndpoint(OUT_EPNUM, EP_TYPE_INTERRUPT, EPSIZE, 1)))
 	{
 		//LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
 	}
@@ -264,7 +264,7 @@ const char PROGMEM buf03[] =
  */
 void EVENT_USB_Device_ControlRequest(void)
 {
-  static char buffer[64];
+  static char buffer[FIXED_CONTROL_ENDPOINT_SIZE];
   unsigned char len = 0;
 
   /* Handle HID Class specific requests */
@@ -336,7 +336,7 @@ static unsigned char info[] = { BYTE_DEBUG, BYTE_LEN_0_BYTE };
 void SendNextReport(void)
 {
 	/* Select the IN Report Endpoint */
-	Endpoint_SelectEndpoint(DS4_IN_EPNUM);
+	Endpoint_SelectEndpoint(IN_EPNUM);
 
   if (ready && sendReport)
   {
@@ -363,8 +363,20 @@ void SendNextReport(void)
 /** Reads the next OUT report from the host from the OUT endpoint, if one has been sent. */
 void ReceiveNextReport(void)
 {
+  static struct
+  {
+    struct
+    {
+      unsigned char type;
+      unsigned char length;
+    } header;
+    unsigned char buffer[64];
+  } packet = { .header.type = BYTE_OUT_REPORT };
+
+  uint16_t length = 0;
+
 	/* Select the OUT Report Endpoint */
-	Endpoint_SelectEndpoint(DS4_OUT_EPNUM);
+	Endpoint_SelectEndpoint(OUT_EPNUM);
 
 	/* Check if OUT Endpoint contains a packet */
 	if (Endpoint_IsOUTReceived())
@@ -372,12 +384,18 @@ void ReceiveNextReport(void)
 		/* Check to see if the packet contains data */
 		if (Endpoint_IsReadWriteAllowed())
 		{
-			/* Discard data */
-			Endpoint_Discard_8();
+		  /* Read OUT Report Data */
+			Endpoint_Read_Stream_LE(packet.buffer, sizeof(packet.buffer), &length);
 		}
 
 		/* Handshake the OUT Endpoint - clear endpoint and ready for next report */
 		Endpoint_ClearOUT();
+
+		if(length)
+		{
+		  packet.header.length = length & 0xFF;
+      Serial_SendData(&packet, sizeof(packet.header) + packet.header.length);
+		}
 	}
 }
 

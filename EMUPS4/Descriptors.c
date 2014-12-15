@@ -44,7 +44,7 @@
  *  the device will send, and what it may be sent back from the host. Refer to the HID specification for
  *  more details on HID report descriptors.
  */
-const USB_Descriptor_HIDReport_Datatype_t PROGMEM Ds4Report[] =
+const USB_Descriptor_HIDReport_Datatype_t PROGMEM Report[] =
 {
     0x05, 0x01, //Usage Page (Desktop)
     0x09, 0x05, //Usage (Gamepad)
@@ -190,7 +190,7 @@ const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 			.InterfaceStrIndex      = NO_DESCRIPTOR
 		},
 
-	.Ds4HID =
+	.HID =
 		{  
 			.Header                 = {.Size = sizeof(USB_Descriptor_HID_t), .Type = DTYPE_HID},
 			
@@ -198,26 +198,26 @@ const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 			.CountryCode            = 0x00,
 			.TotalReportDescriptors = 1,
 			.HIDReportType          = DTYPE_Report,
-			.HIDReportLength        = sizeof(Ds4Report)
+			.HIDReportLength        = sizeof(Report)
 		},
 
-  .Ds4InEndpoint =
+  .InEndpoint =
     {
       .Header                 = {.Size = sizeof(USB_Descriptor_Endpoint_t), .Type = DTYPE_Endpoint},
 
-      .EndpointAddress        = DS4_IN_EPNUM,
+      .EndpointAddress        = IN_EPNUM,
       .Attributes             = (EP_TYPE_INTERRUPT | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
-      .EndpointSize           = DS4_EPSIZE,
+      .EndpointSize           = EPSIZE,
       .PollingIntervalMS      = 0x05
     },
 		
-	.Ds4OutEndpoint =
+	.OutEndpoint =
 		{
 			.Header                 = {.Size = sizeof(USB_Descriptor_Endpoint_t), .Type = DTYPE_Endpoint},
 
-			.EndpointAddress        = DS4_OUT_EPNUM,
+			.EndpointAddress        = OUT_EPNUM,
 			.Attributes             = (EP_TYPE_INTERRUPT | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
-			.EndpointSize           = DS4_EPSIZE,
+			.EndpointSize           = EPSIZE,
 			.PollingIntervalMS      = 0x05
 		}
 };
@@ -299,12 +299,12 @@ uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue,
 			}
 			break;
 		case DTYPE_HID:
-			Address = (void*)&ConfigurationDescriptor.Ds4HID;
+			Address = (void*)&ConfigurationDescriptor.HID;
 			Size    = sizeof(USB_Descriptor_HID_t);
 			break;
 		case DTYPE_Report:
-			Address = (void*)&Ds4Report;
-			Size    = sizeof(Ds4Report);
+			Address = (void*)&Report;
+			Size    = sizeof(Report);
 			break;
 	}
 	
