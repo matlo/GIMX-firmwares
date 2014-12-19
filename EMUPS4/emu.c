@@ -384,8 +384,12 @@ void ReceiveNextReport(void)
 		/* Check to see if the packet contains data */
 		if (Endpoint_IsReadWriteAllowed())
 		{
-		  /* Read OUT Report Data */
-			Endpoint_Read_Stream_LE(packet.buffer, sizeof(packet.buffer), &length);
+      /* Read OUT Report Data */
+      uint8_t ErrorCode = Endpoint_Read_Stream_LE(packet.buffer, sizeof(packet.buffer), &length);
+      if(ErrorCode == ENDPOINT_RWSTREAM_NoError)
+      {
+        length = sizeof(packet.buffer);
+      }
 		}
 
 		/* Handshake the OUT Endpoint - clear endpoint and ready for next report */
