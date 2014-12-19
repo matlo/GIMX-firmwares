@@ -401,6 +401,18 @@ void SendNextReport(void)
 /** Reads the next OUT report from the host from the OUT endpoint, if one has been sent. */
 void ReceiveNextReport(void)
 {
+  static struct
+  {
+    struct
+    {
+      unsigned char type;
+      unsigned char length;
+    } header;
+    unsigned char buffer[SIXAXIS_EPSIZE];
+  } packet = { .header.type = BYTE_OUT_REPORT };
+
+  uint16_t length = 0;
+
 	/* Select the OUT Report Endpoint */
 	Endpoint_SelectEndpoint(SIXAXIS_OUT_EPNUM);
 
@@ -410,12 +422,18 @@ void ReceiveNextReport(void)
 		/* Check to see if the packet contains data */
 		if (Endpoint_IsReadWriteAllowed())
 		{
-			/* Discard data */
-			Endpoint_Discard_8();
+		  /* Read OUT Report Data */
+			Endpoint_Read_Stream_LE(packet.buffer, sizeof(packet.buffer), &length);
 		}
 
 		/* Handshake the OUT Endpoint - clear endpoint and ready for next report */
 		Endpoint_ClearOUT();
+
+		if(length)
+		{
+		  packet.header.length = length & 0xFF;
+      Serial_SendData(&packet, sizeof(packet.header) + packet.header.length);
+		}
 	}
 }
 
