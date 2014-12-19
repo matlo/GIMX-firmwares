@@ -70,20 +70,20 @@
 		{
 			USB_Descriptor_Configuration_Header_t Config;
 			USB_Descriptor_Interface_t            Interface;
-			USB_Descriptor_HID_t                  Ds4HID;
-      USB_Descriptor_Endpoint_t             Ds4InEndpoint;
-			USB_Descriptor_Endpoint_t             Ds4OutEndpoint;
+			USB_Descriptor_HID_t                  HID;
+      USB_Descriptor_Endpoint_t             InEndpoint;
+			USB_Descriptor_Endpoint_t             OutEndpoint;
 		} USB_Descriptor_Configuration_t;
 					
 	/* Macros: */
-		/** Endpoint number of the Ds4 HID reporting IN endpoint. */
-		#define DS4_IN_EPNUM            (ENDPOINT_DIR_IN | 4)
+		/** Endpoint number of the HID reporting IN endpoint. */
+		#define IN_EPNUM            (ENDPOINT_DIR_IN | 4)
 
-		/** Endpoint number of the Ds4 HID reporting OUT endpoint. */
-		#define DS4_OUT_EPNUM           (ENDPOINT_DIR_OUT | 3)
+		/** Endpoint number of the HID reporting OUT endpoint. */
+		#define OUT_EPNUM           (ENDPOINT_DIR_OUT | 3)
 		
-		/** Size in bytes of the Ds4 HID reporting IN and OUT endpoints. */
-		#define DS4_EPSIZE             64
+		/** Size in bytes of the HID reporting IN and OUT endpoints. */
+		#define EPSIZE             64
 
 		/** Descriptor header type value, to indicate a HID class HID descriptor. */
 		#define DTYPE_HID                 0x21
