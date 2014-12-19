@@ -12,7 +12,8 @@
 #define BYTE_START_SPOOF 0x33
 #define BYTE_SPOOF_DATA  0x44
 #define BYTE_RESET       0x55
-#define BYTE_DEBUG        0xee
+#define BYTE_DEBUG       0x99
+#define BYTE_OUT_REPORT  0xee
 #define BYTE_SEND_REPORT 0xff
 
 #define BYTE_TYPE_JOYSTICK   0x00
@@ -22,6 +23,8 @@
 #define BYTE_TYPE_XBOX       0x04
 #define BYTE_TYPE_DS4        0x05
 #define BYTE_TYPE_XBOXONE    0x06
+#define BYTE_TYPE_T300RS_PS4 0x07
+
 
 #define BYTE_STATUS_NSPOOFED 0x00
 #define BYTE_STATUS_SPOOFED  0x01
