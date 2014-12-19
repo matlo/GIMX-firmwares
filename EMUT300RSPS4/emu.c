@@ -45,12 +45,14 @@
 #define USART_BAUDRATE 500000
 #define USART_DOUBLE_SPEED false
 
+#define REPORT_TYPE_FEATURE 0x03
+
 /*
  * The reference report data.
  */
 static uint8_t report[] = {
     0x01, //Report ID
-    0x80, 0x80, 0x80, 0x80, //X, Y, Z, Rz
+    0x80, 0x80, 0x80, 0x80, //X, Y, Z, Rz (unused)
     0x08, //4 MSB = 4 buttons, 4 LSB = hat switch
     0x00, 0x00, //10 buttons
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -58,12 +60,12 @@ static uint8_t report[] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00,
-    0xff, 0x7f, //wheel
+    0x00, 0x80, //wheel
     0xff, 0xff, //gas pedal
     0xff, 0xff, //break pedal
-    0xff, 0xff,
+    0xff, 0xff, //unknown
     0x00,
-    0xff, 0xff,
+    0xff, 0xff, //unknown
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00
 };
@@ -262,6 +264,26 @@ const char PROGMEM buf03[] =
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
+const char PROGMEM buf4f[] = {
+  0x4f, 0xc9, 0xa8, 0xb6, 0x15
+};
+
+const char PROGMEM buf4e[] = {
+  0x4e, 0x14
+};
+
+const char PROGMEM buf4d[] = {
+  0x4d, 0xe8, 0x03
+};
+
+const char PROGMEM buf4c[] = {
+  0x4c, 0x00, 0x02, 0x00, 0x00, 0x00, 0x02, 0x00
+};
+
+static char buf4b[] = {
+  0x4b, 0x54, 0xd5, 0x80, 0x00, 0x00, 0x00, 0x00
+};
+
 /** Event handler for the USB_ControlRequest event. This is used to catch and process control requests sent to
  *  the device from the USB host before passing along unhandled control requests to the library for processing
  *  internally.
@@ -269,7 +291,6 @@ const char PROGMEM buf03[] =
 void EVENT_USB_Device_ControlRequest(void)
 {
   static char buffer[FIXED_CONTROL_ENDPOINT_SIZE];
-  unsigned char len = 0;
 
   /* Handle HID Class specific requests */
 	switch (USB_ControlRequest.bRequest)
@@ -277,33 +298,82 @@ void EVENT_USB_Device_ControlRequest(void)
 		case REQ_GetReport:
 			if (USB_ControlRequest.bmRequestType == (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_INTERFACE))
 			{
-			  if(USB_ControlRequest.wValue == 0x0303)
-        {
-          memcpy_P(buffer, buf03, sizeof(buf03));
-          len = sizeof(buf03);
-          Endpoint_ClearSETUP();
-          Endpoint_Write_Control_Stream_LE(buffer, len);
-          Endpoint_ClearOUT();
-          ready = 1;
-        }
-        else if(USB_ControlRequest.wValue == 0x03f3)
-        {
-          memcpy_P(buffer, buff3, sizeof(buff3));
-          len = sizeof(buff3);
-          Endpoint_ClearSETUP();
-          Endpoint_Write_Control_Stream_LE(buffer, len);
-          Endpoint_ClearOUT();
-        }
-        else if(USB_ControlRequest.wValue == 0x03f1
-             || USB_ControlRequest.wValue == 0x03f2)
-        {
-          spoofReply = 0;
-          send_spoof_header();
-          while(!spoofReply);
-          Endpoint_ClearSETUP();
-          Endpoint_Write_Control_Stream_LE(buf, spoofReplyLen);
-          Endpoint_ClearOUT();
-        }
+			  uint8_t reportType = USB_ControlRequest.wValue >> 8;
+			  uint8_t reportId = USB_ControlRequest.wValue & 0xff;
+
+			  if(reportType == REPORT_TYPE_FEATURE)
+			  {
+          const void* feature = NULL;
+          unsigned char len = 0;
+
+          switch(reportId)
+          {
+            case 0xf1:
+            case 0xf2:
+              spoofReply = 0;
+              send_spoof_header();
+              while(!spoofReply);
+              Endpoint_ClearSETUP();
+              Endpoint_Write_Control_Stream_LE(buf, spoofReplyLen);
+              Endpoint_ClearOUT();
+              break;
+            case 0x03:
+              feature = buf03;
+              len = sizeof(buf03);
+              ready = 1;
+              break;
+            case 0xf3:
+              feature = buff3;
+              len = sizeof(buff3);
+              break;
+            case 0x4b:
+              Endpoint_ClearSETUP();
+              Endpoint_Write_Control_Stream_LE(buf4b, sizeof(buf4b));
+              Endpoint_ClearOUT();
+              Serial_SendByte(BYTE_DEBUG);
+              Serial_SendByte(2);
+              Serial_SendByte(reportId);
+              Serial_SendByte(sizeof(buf4b));
+              break;
+            case 0x4c:
+              feature = buf4c;
+              len = sizeof(buf4c);
+              break;
+            case 0x4d:
+              feature = buf4d;
+              len = sizeof(buf4d);
+              break;
+            case 0x4e:
+              feature = buf4e;
+              len = sizeof(buf4e);
+              break;
+            case 0x4f:
+              feature = buf4f;
+              len = sizeof(buf4f);
+              break;
+            default:
+              Serial_SendByte(BYTE_DEBUG);
+              Serial_SendByte(BYTE_LEN_1_BYTE);
+              Serial_SendByte(reportId);
+              break;
+          }
+
+          if(feature)
+          {
+            Endpoint_ClearSETUP();
+            Endpoint_Write_Control_PStream_LE(feature, len);
+            Endpoint_ClearOUT();
+
+            Serial_SendByte(BYTE_DEBUG);
+            Serial_SendByte(2);
+            Serial_SendByte(reportId);
+            Serial_SendByte(len);
+            /*Serial_SendByte(sizeof(USB_ControlRequest) + len);
+            Serial_SendData(&USB_ControlRequest, sizeof(USB_ControlRequest));
+            memcpy_P(buffer, feature, len);
+            Serial_SendData(buffer, len);*/
+          }
+			  }
 			}
 		
 			break;
@@ -314,10 +384,24 @@ void EVENT_USB_Device_ControlRequest(void)
         Endpoint_Read_Control_Stream_LE(buffer, USB_ControlRequest.wLength);
         Endpoint_ClearIN();
 
-        if(USB_ControlRequest.wValue == 0x03f0)
+        uint8_t reportType = USB_ControlRequest.wValue >> 8;
+        uint8_t reportId = USB_ControlRequest.wValue & 0xff;
+
+        if(reportType == REPORT_TYPE_FEATURE)
         {
-          send_spoof_header();
-          Serial_SendData(buffer, USB_ControlRequest.wLength);
+          switch(reportId)
+          {
+            case 0xf0:
+              send_spoof_header();
+              Serial_SendData(buffer, USB_ControlRequest.wLength);
+              break;
+            default:
+              Serial_SendByte(BYTE_DEBUG);
+              Serial_SendByte(sizeof(USB_ControlRequest) + (USB_ControlRequest.wLength & 0xFF));
+              Serial_SendData(&USB_ControlRequest, sizeof(USB_ControlRequest));
+              Serial_SendData(buffer, USB_ControlRequest.wLength);
+              break;
+          }
         }
 			}
 			
@@ -389,7 +473,11 @@ void ReceiveNextReport(void)
 		if (Endpoint_IsReadWriteAllowed())
 		{
 		  /* Read OUT Report Data */
-			Endpoint_Read_Stream_LE(packet.buffer, sizeof(packet.buffer), &length);
+		  uint8_t ErrorCode = Endpoint_Read_Stream_LE(packet.buffer, sizeof(packet.buffer), &length);
+		  if(ErrorCode == ENDPOINT_RWSTREAM_NoError)
+		  {
+		    length = sizeof(packet.buffer);
+		  }
 		}
 
 		/* Handshake the OUT Endpoint - clear endpoint and ready for next report */
@@ -397,8 +485,22 @@ void ReceiveNextReport(void)
 
 		if(length)
 		{
-		  packet.header.length = length & 0xFF;
-      Serial_SendData(&packet, sizeof(packet.header) + packet.header.length);
+		  switch(packet.buffer[0])
+		  {
+		    case 0x34:
+		    case 0x35:
+		      //break;
+		    default:
+		      packet.header.length = length & 0xFF;
+		      Serial_SendData(&packet, sizeof(packet.header) + packet.header.length);
+		      break;
+		  }
+
+      if(packet.buffer[0] == 0x38)
+      {
+        buf4b[1] = packet.buffer[2];
+        buf4b[2] = packet.buffer[3];
+      }
 		}
 	}
 }
