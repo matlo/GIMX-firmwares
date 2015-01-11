@@ -46,8 +46,8 @@
 #define PIN_OFF(PIN)     (PORTD &= ~(1<<PIN))
 #define PIN_ON(PIN)      (PORTD |= (1<<PIN))
 
-#define USART_BAUDRATE 2000000
-#define USART_DOUBLE_SPEED true
+#define USART_BAUDRATE 500000
+#define USART_DOUBLE_SPEED false
 
 /*
  * IN report.
