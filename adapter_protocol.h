@@ -24,6 +24,7 @@
 #define BYTE_TYPE_DS4        0x05
 #define BYTE_TYPE_XBOXONE    0x06
 #define BYTE_TYPE_T300RS_PS4 0x07
+#define BYTE_TYPE_G27_PS3    0x08
 
 
 #define BYTE_STATUS_NSPOOFED 0x00
