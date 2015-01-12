@@ -326,8 +326,6 @@ void SendNextReport(void)
 
   if (sendReport)
   {
-    //Endpoint_SetEndpointDirection(ENDPOINT_DIR_IN);
-
     /* Wait until the host is ready to accept another packet */
     while (!Endpoint_IsINReady()) {}
 
@@ -336,8 +334,6 @@ void SendNextReport(void)
 
 		/* Finalize the stream transfer to send the last packet */
 		Endpoint_ClearIN();
-
-		//Endpoint_SetEndpointDirection(ENDPOINT_DIR_OUT);
 
 	  PIN_OFF(5);
 
@@ -365,7 +361,7 @@ void ReceiveNextReport(void)
       unsigned char length;
     } header;
     unsigned char buffer[EPSIZE];
-  } packet = { .header.type = BYTE_OUT_REPORT };
+  } packet = { .header.type = BYTE_DEBUG };
 
   uint16_t length = 0;
 
