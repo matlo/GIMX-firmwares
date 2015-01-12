@@ -46,7 +46,59 @@
  */
 const USB_Descriptor_HIDReport_Datatype_t PROGMEM Report[] =
 {
-  0x05, 0x01,
+  0x05, 0x01,         /*  Usage Page (Desktop),               */
+  0x09, 0x04,         /*  Usage (Joystik),                    */
+  0xA1, 0x01,         /*  Collection (Application),           */
+  0x14,               /*      Logical Minimum (0),            */
+  0x25, 0x07,         /*      Logical Maximum (7),            */
+  0x34,               /*      Physical Minimum (0),           */
+  0x46, 0x3B, 0x01,   /*      Physical Maximum (315),         */
+  0x65, 0x14,         /*      Unit (Degrees),                 */
+  0x09, 0x39,         /*      Usage (Hat Switch),             */
+  0x75, 0x04,         /*      Report Size (4),                */
+  0x95, 0x01,         /*      Report Count (1),               */
+  0x81, 0x42,         /*      Input (Variable, Null State),   */
+  0x64,               /*      Unit,                           */
+  0x25, 0x01,         /*      Logical Maximum (1),            */
+  0x45, 0x01,         /*      Physical Maximum (1),           */
+  0x05, 0x09,         /*      Usage Page (Button),            */
+  0x19, 0x01,         /*      Usage Minimum (01h),            */
+  0x29, 0x13,         /*      Usage Maximum (13h),            */
+  0x75, 0x01,         /*      Report Size (1),                */
+  0x95, 0x13,         /*      Report Count (19),              */
+  0x81, 0x02,         /*      Input (Variable),               */
+  0x06, 0x00, 0xFF,   /*      Usage Page (FF00h),             */
+  0x09, 0x01,         /*      Usage (01h),                    */
+  0x95, 0x03,         /*      Report Count (3),               */
+  0x81, 0x02,         /*      Input (Variable),               */
+  0x26, 0xFF, 0x3F,   /*      Logical Maximum (16383),        */
+  0x46, 0xFF, 0x3F,   /*      Physical Maximum (16383),       */
+  0x75, 0x0E,         /*      Report Size (14),               */
+  0x95, 0x01,         /*      Report Count (1),               */
+  0x05, 0x01,         /*      Usage Page (Desktop),           */
+  0x09, 0x30,         /*      Usage (X),                      */
+  0x81, 0x02,         /*      Input (Variable),               */
+  0x26, 0xFF, 0x00,   /*      Logical Maximum (255),          */
+  0x46, 0xFF, 0x00,   /*      Physical Maximum (255),         */
+  0x75, 0x08,         /*      Report Size (8),                */
+  0x95, 0x03,         /*      Report Count (3),               */
+  0x09, 0x32,         /*      Usage (Z),                      */
+  0x09, 0x35,         /*      Usage (Rz),                     */
+  0x09, 0x31,         /*      Usage (Y),                      */
+  0x81, 0x02,         /*      Input (Variable),               */
+  0x06, 0x00, 0xFF,   /*      Usage Page (FF00h),             */
+  0x09, 0x04,         /*      Usage (04h),                    */
+  0x95, 0x03,         /*      Report Count (3),               */
+  0x81, 0x02,         /*      Input (Variable),               */
+  0x95, 0x07,         /*      Report Count (7),               */
+  0x06, 0x00, 0xFF,   /*      Usage Page (FF00h),             */
+  0x09, 0x02,         /*      Usage (02h),                    */
+  0x91, 0x02,         /*      Output (Variable),              */
+  0x95, 0x90,         /*      Report Count (144),             */
+  0x09, 0x03,         /*      Usage (03h),                    */
+  0xB1, 0x02,         /*      Feature (Variable),             */
+  0xC0                /*  End Collection                      */
+  /*0x05, 0x01,
   0x09, 0x04,
   0xA1, 0x01,
   0xA1, 0x02,
@@ -107,7 +159,7 @@ const USB_Descriptor_HIDReport_Datatype_t PROGMEM Report[] =
   0x91, 0x02,
   0x00, 0x00, 0x00,
   0xC0,
-  0xC0
+  0xC0*/
 };
 
 /** Device descriptor structure. This descriptor, located in FLASH memory, describes the overall
@@ -207,6 +259,17 @@ const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 		}
 };
 
+/** Language descriptor structure. This descriptor, located in FLASH memory, is returned when the host requests
+ *  the string descriptor with index 0 (the first index). It is actually an array of 16-bit integers, which indicate
+ *  via the language ID table available at USB.org what languages the device supports for its string descriptors.
+ */
+const USB_Descriptor_String_t PROGMEM LanguageString =
+{
+  .Header                 = {.Size = USB_STRING_LEN(1), .Type = DTYPE_String},
+
+  .UnicodeString          = {LANGUAGE_ID_ENG}
+};
+
 /** Product descriptor string. This is a Unicode string containing the product's details in human readable form,
  *  and is read out upon request by the host when the appropriate string ID is requested, listed in the Device
  *  Descriptor.
@@ -214,7 +277,7 @@ const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 const USB_Descriptor_String_t PROGMEM ProductString =
 {
 	.Header                 = {.Size = USB_STRING_LEN(16), .Type = DTYPE_String},
-		
+
 	.UnicodeString          = L"G27 Racing Wheel"
 };
 
@@ -247,10 +310,14 @@ uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue,
 		case DTYPE_String: 
 			switch (DescriptorNumber)
 			{
-				case 0x02: 
-					Address = (void*)&ProductString;
-					Size    = pgm_read_byte(&ProductString.Header.Size);
-					break;
+        case 0x00:
+          Address = (void*)&LanguageString;
+          Size    = pgm_read_byte(&LanguageString.Header.Size);
+          break;
+        case 0x02:
+          Address = (void*)&ProductString;
+          Size    = pgm_read_byte(&ProductString.Header.Size);
+          break;
 			}
 			break;
 		case DTYPE_HID:

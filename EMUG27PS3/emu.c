@@ -49,14 +49,21 @@
 #define USART_BAUDRATE 500000
 #define USART_DOUBLE_SPEED false
 
+#define REPORT_TYPE_FEATURE 0x03
+
 /*
  * IN report.
  */
-static uint8_t report[] = {
-    0x00, 0x02, 0x80, 0x7F, 0x88, 0xFF, 0xFF
-};
-
-static unsigned char ready = 0;
+static struct __attribute__ ((packed))
+{
+  unsigned char hatAndButtons; //4 LSB = hat, 4 MSB = buttons
+  unsigned short buttons;
+  unsigned short wheel; //big-endian, 14 MSB = axis
+  unsigned char gasPedal;
+  unsigned char brakePedal;
+  unsigned char clutchPedal;
+  unsigned char unknown[3];
+} report;
 
 static uint8_t* pdata;
 static unsigned char i = 0;
@@ -102,20 +109,6 @@ int main(void)
   }
 }
 
-static inline void send_spoof_header(void)
-{
-  Serial_SendByte(BYTE_SPOOF_DATA);
-  if( USB_ControlRequest.bmRequestType & REQDIR_DEVICETOHOST )
-  {
-    Serial_SendByte(sizeof(USB_ControlRequest));
-  }
-  else
-  {
-    Serial_SendByte(sizeof(USB_ControlRequest) + (USB_ControlRequest.wLength & 0xFF));
-  }
-  Serial_SendData(&USB_ControlRequest, sizeof(USB_ControlRequest));
-}
-
 static inline void handle_packet(void)
 {
   switch(packet_type)
@@ -159,7 +152,7 @@ ISR(USART1_RX_vect)
   value_len = Serial_BlockingReceiveByte();
   if(packet_type == BYTE_SEND_REPORT)
   {
-    pdata = report;
+    pdata = (uint8_t*)&report;
   }
   else
   {
@@ -254,7 +247,57 @@ void EVENT_USB_Device_ConfigurationChanged(void)
  */
 void EVENT_USB_Device_ControlRequest(void)
 {
-  
+  static char buffer[FIXED_CONTROL_ENDPOINT_SIZE];
+
+  /* Handle HID Class specific requests */
+	switch (USB_ControlRequest.bRequest)
+	{
+    case REQ_GetReport:
+      if (USB_ControlRequest.bmRequestType == (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_INTERFACE))
+      {
+        uint8_t reportType = USB_ControlRequest.wValue >> 8;
+        uint8_t reportId = USB_ControlRequest.wValue & 0xff;
+
+        if(reportType == REPORT_TYPE_FEATURE)
+        {
+          switch(reportId)
+          {
+            default:
+              Serial_SendByte(BYTE_DEBUG);
+              Serial_SendByte(BYTE_LEN_1_BYTE);
+              Serial_SendByte(reportId);
+              break;
+          }
+        }
+      }
+
+      break;
+    case REQ_SetReport:
+      if (USB_ControlRequest.bmRequestType == (REQDIR_HOSTTODEVICE | REQTYPE_CLASS | REQREC_INTERFACE))
+      {
+        Endpoint_ClearSETUP();
+        Endpoint_Read_Control_Stream_LE(buffer, USB_ControlRequest.wLength);
+        Endpoint_ClearIN();
+
+        uint8_t reportType = USB_ControlRequest.wValue >> 8;
+        uint8_t reportId = USB_ControlRequest.wValue & 0xff;
+
+        if(reportType == REPORT_TYPE_FEATURE)
+        {
+          switch(reportId)
+          {
+            default:
+              Serial_SendByte(BYTE_DEBUG);
+              Serial_SendByte(sizeof(USB_ControlRequest) + (USB_ControlRequest.wLength & 0xFF));
+              Serial_SendData(&USB_ControlRequest, sizeof(USB_ControlRequest));
+              Serial_SendData(buffer, USB_ControlRequest.wLength);
+              break;
+          }
+        }
+      }
+
+      break;
+  }
 }
 
 /** Event handler for the USB device Start Of Frame event. */
@@ -268,7 +311,7 @@ static unsigned char nbReports = 0;
 static unsigned char info[] = { BYTE_DEBUG, BYTE_LEN_0_BYTE };
 #endif
 
-static unsigned char inReportSent[] = { BYTE_SEND_REPORT, BYTE_LEN_0_BYTE };
+//static unsigned char inReportSent[] = { BYTE_SEND_REPORT, BYTE_LEN_0_BYTE };
 
 /** Sends the next HID report to the host, via the IN endpoint. */
 void SendNextReport(void)
@@ -281,20 +324,24 @@ void SendNextReport(void)
 	  PIN_ON(5);
 	}
 
-  if (ready && sendReport)
+  if (sendReport)
   {
+    //Endpoint_SetEndpointDirection(ENDPOINT_DIR_IN);
+
     /* Wait until the host is ready to accept another packet */
     while (!Endpoint_IsINReady()) {}
 
 		/* Write IN Report Data */
-		Endpoint_Write_Stream_LE(report, sizeof(report), NULL);
+		Endpoint_Write_Stream_LE(&report, 7, NULL);
 
 		/* Finalize the stream transfer to send the last packet */
 		Endpoint_ClearIN();
 
+		//Endpoint_SetEndpointDirection(ENDPOINT_DIR_OUT);
+
 	  PIN_OFF(5);
 
-    Serial_SendData(inReportSent, sizeof(inReportSent));
+    //Serial_SendData(inReportSent, sizeof(inReportSent));
 
     sendReport = 0;
 

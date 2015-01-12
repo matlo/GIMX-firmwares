@@ -83,7 +83,7 @@
 		#define OUT_EPNUM           (ENDPOINT_DIR_OUT | 2)
 		
 		/** Size in bytes of the HID reporting IN and OUT endpoints. */
-		#define EPSIZE             8
+		#define EPSIZE             16
 
 		/** Descriptor header type value, to indicate a HID class HID descriptor. */
 		#define DTYPE_HID                 0x21
