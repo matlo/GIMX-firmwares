@@ -44,7 +44,7 @@
  *  the device will send, and what it may be sent back from the host. Refer to the HID specification for
  *  more details on HID report descriptors.
  */
-const USB_Descriptor_HIDReport_Datatype_t PROGMEM SixaxisReport[] =
+const USB_Descriptor_HIDReport_Datatype_t PROGMEM Report[] =
 {
 		0x05, 0x01,
 		0x09, 0x04,
@@ -188,34 +188,34 @@ const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 			.InterfaceStrIndex      = NO_DESCRIPTOR
 		},
 
-	.SixaxisHID =
+	.HID =
 		{  
 			.Header                 = {.Size = sizeof(USB_Descriptor_HID_t), .Type = DTYPE_HID},
 			
-			.HIDSpec                = VERSION_BCD(01.11),
+			.HIDSpec                = 0x0111,
 			.CountryCode            = 0x00,
 			.TotalReportDescriptors = 1,
 			.HIDReportType          = DTYPE_Report,
-			.HIDReportLength        = sizeof(SixaxisReport)
+			.HIDReportLength        = sizeof(Report)
 		},
 		
-	.SixaxisOutEndpoint =
+  .InEndpoint =
 		{
 			.Header                 = {.Size = sizeof(USB_Descriptor_Endpoint_t), .Type = DTYPE_Endpoint},
 
-			.EndpointAddress        = SIXAXIS_OUT_EPNUM,
+      .EndpointAddress        = IN_EPNUM,
 			.Attributes             = (EP_TYPE_INTERRUPT | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
-			.EndpointSize           = SIXAXIS_EPSIZE,
+      .EndpointSize           = EPSIZE,
 			.PollingIntervalMS      = 0x01
 		},
 
-	.SixaxisInEndpoint =
+	.OutEndpoint =
 		{
 			.Header                 = {.Size = sizeof(USB_Descriptor_Endpoint_t), .Type = DTYPE_Endpoint},
 
-			.EndpointAddress        = SIXAXIS_IN_EPNUM,
+			.EndpointAddress        = OUT_EPNUM,
 			.Attributes             = (EP_TYPE_INTERRUPT | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
-			.EndpointSize           = SIXAXIS_EPSIZE,
+			.EndpointSize           = EPSIZE,
 			.PollingIntervalMS      = 0x01
 		}
 };
@@ -297,12 +297,12 @@ uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue,
 			}
 			break;
 		case DTYPE_HID: 
-			Address = (void*)&ConfigurationDescriptor.SixaxisHID;
+			Address = (void*)&ConfigurationDescriptor.HID;
 			Size    = sizeof(USB_Descriptor_HID_t);
 			break;
 		case DTYPE_Report: 
-			Address = (void*)&SixaxisReport;
-			Size    = sizeof(SixaxisReport);
+			Address = (void*)&Report;
+			Size    = sizeof(Report);
 			break;
 	}
 	
