@@ -37,9 +37,9 @@
 #define _DESCRIPTORS_H_
 
 	/* Includes: */
-		#include <avr/pgmspace.h>
+		#include "LUFA/Drivers/USB/USB.h"
 
-		#include <LUFA/Drivers/USB/USB.h>
+		#include <avr/pgmspace.h>
 
 	/* Type Defines: */
 		/** Type define for the device configuration descriptor structure. This must be defined in the
@@ -72,16 +72,20 @@
 		} USB_Descriptor_Configuration_t;
 					
 	/* Macros: */
-		/** Endpoint number of the X360_EMU HID reporting IN endpoint. */
-		#define X360_EMU_EPNUM11               (ENDPOINT_DIR_IN  | 1)
-    #define X360_EMU_EPNUM12               (ENDPOINT_DIR_OUT | 2)
-    #define X360_EMU_EPNUM21               (ENDPOINT_DIR_IN  | 3)
-    #define X360_EMU_EPNUM22               (ENDPOINT_DIR_OUT | 4)
-    #define X360_EMU_EPNUM23               (ENDPOINT_DIR_IN  | 5)
-    #define X360_EMU_EPNUM24               (ENDPOINT_DIR_OUT | 5)
-    #define X360_EMU_EPNUM31               (ENDPOINT_DIR_IN  | 6)
+		/** Endpoint number of the HID reporting IN endpoint. */
+		#define IN_EPNUM               (ENDPOINT_DIR_IN  | 1)
+
+		/** Endpoint number of the HID reporting OUT endpoint. */
+    #define OUT_EPNUM              (ENDPOINT_DIR_OUT | 2)
+    
+    /** Other endpoints */
+    #define EPNUM21                (ENDPOINT_DIR_IN  | 3)
+    #define EPNUM22                (ENDPOINT_DIR_OUT | 4)
+    #define EPNUM23                (ENDPOINT_DIR_IN  | 5)
+    #define EPNUM24                (ENDPOINT_DIR_OUT | 5)
+    #define EPNUM31                (ENDPOINT_DIR_IN  | 6)
 		
-		/** Size in bytes of the X360_EMU HID reporting IN and OUT endpoints. */
-		#define X360_EMU_EPSIZE              32
+		/** Size in bytes of the HID reporting IN and OUT endpoints. */
+		#define EPSIZE              32
 
 #endif

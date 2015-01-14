@@ -30,16 +30,17 @@
 
 /** \file
  *
- *  Main source file for the x360 controller. This file contains the main tasks and
+ *  Main source file for the controller. This file contains the main tasks and
  *  is responsible for the initial application hardware configuration.
  */
  
-#include "x360_emu.h"
+#include "emu.h"
 #include <LUFA/Drivers/Peripheral/Serial.h>
 #include <avr/wdt.h>
 #include "../adapter_protocol.h"
 
 #define USART_BAUDRATE 500000
+#define USART_DOUBLE_SPEED false
 
 /*
  * The reference report data.
@@ -57,6 +58,8 @@ static uint8_t report[20] = {
       0x00,0x00,0x00,0x00,0x00,0x00
 };
 
+static unsigned char ready = 0;
+
 static uint8_t* pdata;
 static unsigned char i = 0;
 
@@ -65,13 +68,16 @@ static unsigned char i = 0;
  * therefore they have to be declared as volatile.
  */
 static volatile unsigned char sendReport = 0;
-static volatile unsigned char spoof_initialized = BYTE_STATUS_NSPOOFED;
-static volatile unsigned char start_spoof = 0;
+static volatile unsigned char started = 0;
 static volatile unsigned char packet_type = 0;
 static volatile unsigned char value_len = 0;
+static volatile unsigned char spoofReply = 0;
+static volatile unsigned char spoofReplyLen = 0;
+static volatile unsigned char spoof_initialized = BYTE_STATUS_NSPOOFED;
 
 void forceHardReset(void)
 {
+  LEDs_TurnOnLEDs(LEDS_ALL_LEDS);
   cli(); // disable interrupts
   wdt_enable(WDTO_15MS); // enable watchdog
   while(1); // wait for watchdog to reset processor
@@ -125,13 +131,18 @@ static inline void handle_packet(void)
       Serial_SendByte(BYTE_LEN_1_BYTE);
       Serial_SendByte(spoof_initialized);
       break;
-    case BYTE_START_SPOOF:
-      Serial_SendByte(BYTE_START_SPOOF);
+    case BYTE_START:
+      Serial_SendByte(BYTE_START);
       Serial_SendByte(BYTE_LEN_1_BYTE);
       Serial_SendByte(spoof_initialized);
-      start_spoof = 1;
+      started = 1;
       break;
     case BYTE_SPOOF_DATA:
+      spoofReply = 1;
+      spoofReplyLen = value_len;
+      break;
+    case BYTE_RESET:
+      forceHardReset();
       break;
     case BYTE_SEND_REPORT:
       sendReport = 1;
@@ -164,9 +175,9 @@ ISR(USART1_RX_vect)
 
 void serial_init(void)
 {
-   Serial_Init(USART_BAUDRATE, false);
+  Serial_Init(USART_BAUDRATE, USART_DOUBLE_SPEED);
 
-   UCSR1B |= (1 << RXCIE1); // Enable the USART Receive Complete interrupt (USART_RXC)
+  UCSR1B |= (1 << RXCIE1); // Enable the USART Receive Complete interrupt (USART_RXC)
 }
 
 /** Configures the board hardware and chip peripherals for the demo's functionality. */
@@ -183,10 +194,10 @@ void SetupHardware(void)
 
   GlobalInterruptEnable();
 
-  while(!start_spoof);
-
   /* Hardware Initialization */
   LEDs_Init();
+
+  while(!started);
 
   USB_Init();
 }
@@ -216,12 +227,12 @@ void EVENT_USB_Device_ConfigurationChanged(void)
 {
   //LEDs_SetAllLEDs(LEDMASK_USB_READY);
 
-  if (!Endpoint_ConfigureEndpoint(X360_EMU_EPNUM11, EP_TYPE_INTERRUPT, X360_EMU_EPSIZE, 1))
+	if (!(Endpoint_ConfigureEndpoint(IN_EPNUM, EP_TYPE_INTERRUPT, EPSIZE, 1)))
   {
     //LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
   }
 
-  if(!Endpoint_ConfigureEndpoint(X360_EMU_EPNUM12, EP_TYPE_INTERRUPT, X360_EMU_EPSIZE, 1))
+	if (!(Endpoint_ConfigureEndpoint(OUT_EPNUM, EP_TYPE_INTERRUPT, EPSIZE, 1)))
   {
     //LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
   }
@@ -247,13 +258,13 @@ void EVENT_USB_Device_ControlRequest(void)
         Endpoint_Read_Control_Stream_LE(buf, USB_ControlRequest.wLength);
         Endpoint_ClearIN();
       }
-      packet_type = BYTE_NO_PACKET;
+      spoofReply = 0;
       send_spoof_header();
       if( USB_ControlRequest.bmRequestType & REQDIR_DEVICETOHOST )
       {
-        while(packet_type != BYTE_SPOOF_DATA);
+        while(!spoofReply);
         Endpoint_ClearSETUP();
-        Endpoint_Write_Control_Stream_LE(buf, value_len);
+        Endpoint_Write_Control_Stream_LE(buf, spoofReplyLen);
         Endpoint_ClearOUT();
         if(USB_ControlRequest.wValue == 0x5c10)
         {
@@ -261,6 +272,7 @@ void EVENT_USB_Device_ControlRequest(void)
           {
             spoof_initialized = BYTE_STATUS_SPOOFED;
             LEDs_TurnOffLEDs(LEDS_LED1);
+            ready = 1;
           }
           response = 1;
         }
@@ -329,9 +341,9 @@ void EVENT_USB_Device_ControlRequest(void)
 void SendNextReport(void)
 {
   /* Select the IN Report Endpoint */
-  Endpoint_SelectEndpoint(X360_EMU_EPNUM11);
+	Endpoint_SelectEndpoint(IN_EPNUM);
 
-  if (sendReport)
+  if (ready && sendReport)
   {
     /* Wait until the host is ready to accept another packet */
     while (!Endpoint_IsINReady()) {}
@@ -349,8 +361,20 @@ void SendNextReport(void)
 /** Reads the next OUT report from the host from the OUT endpoint, if one has been sent. */
 void ReceiveNextReport(void)
 {
+  static struct
+  {
+    struct
+    {
+      unsigned char type;
+      unsigned char length;
+    } header;
+    unsigned char buffer[EPSIZE];
+  } packet = { .header.type = BYTE_OUT_REPORT };
+
+  uint16_t length = 0;
+
   /* Select the OUT Report Endpoint */
-  Endpoint_SelectEndpoint(X360_EMU_EPNUM12);
+	Endpoint_SelectEndpoint(OUT_EPNUM);
 
   /* Check if OUT Endpoint contains a packet */
   if (Endpoint_IsOUTReceived())
@@ -358,12 +382,27 @@ void ReceiveNextReport(void)
     /* Check to see if the packet contains data */
     if (Endpoint_IsReadWriteAllowed())
     {
-      /* Discard data */
-      Endpoint_Discard_8();
+		  /* Read OUT Report Data */
+		  uint8_t ErrorCode = Endpoint_Read_Stream_LE(packet.buffer, sizeof(packet.buffer), &length);
+		  if(ErrorCode == ENDPOINT_RWSTREAM_NoError)
+		  {
+		    length = sizeof(packet.buffer);
+		  }
     }
 
     /* Handshake the OUT Endpoint - clear endpoint and ready for next report */
     Endpoint_ClearOUT();
+
+		if(length)
+		{
+		  switch(packet.buffer[0])
+		  {
+		    default:
+		      packet.header.length = length & 0xFF;
+		      Serial_SendData(&packet, sizeof(packet.header) + packet.header.length);
+		      break;
+		  }
+		}
   }
 }
 

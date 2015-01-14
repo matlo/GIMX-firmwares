@@ -174,9 +174,9 @@ const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 		{
 			.Header                 = {.Size = sizeof(USB_Descriptor_Endpoint_t), .Type = DTYPE_Endpoint},
 
-			.EndpointAddress        = X360_EMU_EPNUM11,
+			.EndpointAddress        = IN_EPNUM,
 			.Attributes             = (EP_TYPE_INTERRUPT | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
-			.EndpointSize           = X360_EMU_EPSIZE,
+			.EndpointSize           = EPSIZE,
 			.PollingIntervalMS      = 0x01
 		},
 
@@ -184,9 +184,9 @@ const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
     {
       .Header                 = {.Size = sizeof(USB_Descriptor_Endpoint_t), .Type = DTYPE_Endpoint},
 
-      .EndpointAddress        = X360_EMU_EPNUM12,
+      .EndpointAddress        = OUT_EPNUM,
       .Attributes             = (EP_TYPE_INTERRUPT | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
-      .EndpointSize           = X360_EMU_EPSIZE,
+      .EndpointSize           = EPSIZE,
       .PollingIntervalMS      = 0x08
     },
 
@@ -194,9 +194,9 @@ const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
     {
       .Header                 = {.Size = sizeof(USB_Descriptor_Endpoint_t), .Type = DTYPE_Endpoint},
 
-      .EndpointAddress        = X360_EMU_EPNUM21,
+      .EndpointAddress        = EPNUM21,
       .Attributes             = (EP_TYPE_INTERRUPT | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
-      .EndpointSize           = X360_EMU_EPSIZE,
+      .EndpointSize           = EPSIZE,
       .PollingIntervalMS      = 0x02
     },
 
@@ -204,9 +204,9 @@ const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
     {
       .Header                 = {.Size = sizeof(USB_Descriptor_Endpoint_t), .Type = DTYPE_Endpoint},
 
-      .EndpointAddress        = X360_EMU_EPNUM22,
+      .EndpointAddress        = EPNUM22,
       .Attributes             = (EP_TYPE_INTERRUPT | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
-      .EndpointSize           = X360_EMU_EPSIZE,
+      .EndpointSize           = EPSIZE,
       .PollingIntervalMS      = 0x04
     },
 
@@ -214,9 +214,9 @@ const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
     {
       .Header                 = {.Size = sizeof(USB_Descriptor_Endpoint_t), .Type = DTYPE_Endpoint},
 
-      .EndpointAddress        = X360_EMU_EPNUM23,
+      .EndpointAddress        = EPNUM23,
       .Attributes             = (EP_TYPE_INTERRUPT | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
-      .EndpointSize           = X360_EMU_EPSIZE,
+      .EndpointSize           = EPSIZE,
       .PollingIntervalMS      = 0x40
     },
 
@@ -224,9 +224,9 @@ const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
     {
       .Header                 = {.Size = sizeof(USB_Descriptor_Endpoint_t), .Type = DTYPE_Endpoint},
 
-      .EndpointAddress        = X360_EMU_EPNUM24,
+      .EndpointAddress        = EPNUM24,
       .Attributes             = (EP_TYPE_INTERRUPT | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
-      .EndpointSize           = X360_EMU_EPSIZE,
+      .EndpointSize           = EPSIZE,
       .PollingIntervalMS      = 0x10
     },
 
@@ -234,9 +234,9 @@ const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
     {
       .Header                 = {.Size = sizeof(USB_Descriptor_Endpoint_t), .Type = DTYPE_Endpoint},
 
-      .EndpointAddress        = X360_EMU_EPNUM31,
+      .EndpointAddress        = EPNUM31,
       .Attributes             = (EP_TYPE_INTERRUPT | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
-      .EndpointSize           = X360_EMU_EPSIZE,
+      .EndpointSize           = EPSIZE,
       .PollingIntervalMS      = 0x10
     },
 };
@@ -308,44 +308,44 @@ uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue,
 	const uint8_t  DescriptorType   = (wValue >> 8);
 	const uint8_t  DescriptorNumber = (wValue & 0xFF);
 
-	const void*    Address = NULL;
+	void*    Address = NULL;
 	uint16_t Size    = NO_DESCRIPTOR;
 
 	switch (DescriptorType)
 	{
 		case DTYPE_Device: 
-			Address = &DeviceDescriptor;
+			Address = (void*)&DeviceDescriptor;
 			Size    = sizeof(USB_Descriptor_Device_t);
 			break;
 		case DTYPE_Configuration: 
-			Address = &ConfigurationDescriptor;
+			Address = (void*)&ConfigurationDescriptor;
 			Size    = sizeof(USB_Descriptor_Configuration_t);
 			break;
 		case DTYPE_String: 
 			switch (DescriptorNumber)
 			{
 				case 0x00:
-					Address = &LanguageString;
+					Address = (void*)&LanguageString;
 					Size    = pgm_read_byte(&LanguageString.Header.Size);
 					break;
 				case 0x01:
-					Address = &ManufacturerString;
+					Address = (void*)&ManufacturerString;
 					Size    = pgm_read_byte(&ManufacturerString.Header.Size);
 					break;
 				case 0x02: 
-					Address = &ProductString;
+					Address = (void*)&ProductString;
 					Size    = pgm_read_byte(&ProductString.Header.Size);
 					break;
 				case 0x03:
-          Address = &SerialString;
+          Address = (void*)&SerialString;
           Size    = pgm_read_byte(&SerialString.Header.Size);
           break;
 				case 0x04:
-          Address = &XboxString;
+          Address = (void*)&XboxString;
           Size    = pgm_read_byte(&XboxString.Header.Size);
           break;
         case 0xee:
-          Address = &ModString;
+          Address = (void*)&ModString;
           Size    = pgm_read_byte(&ModString.Header.Size);
           break;
 			}

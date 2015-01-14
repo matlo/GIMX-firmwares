@@ -31,11 +31,11 @@
 
 /** \file
  *
- *  Header file for x360_emu.c.
+ *  Header file for emu.c.
  */
 
-#ifndef _X360_EMU_H_
-#define _X360_EMU_H_
+#ifndef _EMU_H_
+#define _EMU_H_
 
 	/* Includes: */
 		#include <avr/io.h>
