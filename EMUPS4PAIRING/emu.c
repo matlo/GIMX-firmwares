@@ -35,11 +35,6 @@
  */
  
 #include "emu.h"
-#include <LUFA/Drivers/Peripheral/Serial.h>
-#include "../adapter_protocol.h"
-
-#define USART_BAUDRATE 500000
-#define USART_DOUBLE_SPEED false
 
 uint8_t EEMEM eeSlaveBdaddr[6] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
 uint8_t EEMEM eeMasterBdaddr[6] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
@@ -78,23 +73,6 @@ static uint8_t report[] = {
     0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00
 };
 
-static uint8_t* pdata;
-static unsigned char i = 0;
-
-/*
- * These variables are used in both the main and serial interrupt,
- * therefore they have to be declared as volatile.
- */
-static volatile unsigned char sendReport = 0;
-static volatile unsigned char packet_type = 0;
-static volatile unsigned char value_len = 0;
-
-static inline int16_t Serial_BlockingReceiveByte(void)
-{
-  while(!Serial_IsCharReceived());
-  return UDR1;
-}
-
 /** Main program entry point. This routine configures the hardware required by the application, then
  *  enters a loop to run the application tasks in sequence.
  */
@@ -111,57 +89,6 @@ int main(void)
   }
 }
 
-static inline void handle_packet(void)
-{
-  switch(packet_type)
-  {
-    case BYTE_TYPE:
-      Serial_SendByte(BYTE_TYPE);
-      Serial_SendByte(BYTE_LEN_1_BYTE);
-      Serial_SendByte(BYTE_TYPE_DS4);
-      break;
-    case BYTE_STATUS:
-      break;
-    case BYTE_START_SPOOF:
-      break;
-    case BYTE_SPOOF_DATA:
-      break;
-    case BYTE_SEND_REPORT:
-      sendReport = 1;
-      //no answer
-      break;
-  }
-}
-
-static unsigned char buf[64];
-
-ISR(USART1_RX_vect)
-{
-  packet_type = UDR1;
-  value_len = Serial_BlockingReceiveByte();
-  if(packet_type == BYTE_SEND_REPORT)
-  {
-    pdata = report;
-  }
-  else
-  {
-    pdata = buf;
-  }
-  while(i < value_len)
-  {
-    pdata[i++] = Serial_BlockingReceiveByte();
-  }
-  i = 0;
-  handle_packet();
-}
-
-void serial_init(void)
-{
-  Serial_Init(USART_BAUDRATE, USART_DOUBLE_SPEED);
-
-  UCSR1B |= (1 << RXCIE1); // Enable the USART Receive Complete interrupt (USART_RXC)
-}
-
 /** Configures the board hardware and chip peripherals for the demo's functionality. */
 void SetupHardware(void)
 {
@@ -171,8 +98,6 @@ void SetupHardware(void)
 
 	/* Disable clock division */
 	clock_prescale_set(clock_div_1);
-
-  serial_init();
 
   GlobalInterruptEnable();
 
@@ -337,6 +262,7 @@ void EVENT_USB_Device_ControlRequest(void)
 	// One millisecond has elapsed.
 }*/
 
+static volatile unsigned char sendReport = 0;
 
 /** Sends the next HID report to the host, via the IN endpoint. */
 void SendNextReport(void)
