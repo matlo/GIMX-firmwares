@@ -123,8 +123,8 @@ static inline void handle_packet(void)
       Serial_SendByte(BYTE_LEN_1_BYTE);
       Serial_SendByte(started);
       break;
-    case BYTE_START_SPOOF:
-      Serial_SendByte(BYTE_START_SPOOF);
+    case BYTE_START:
+      Serial_SendByte(BYTE_START);
       Serial_SendByte(BYTE_LEN_1_BYTE);
       Serial_SendByte(started);
       started = 1;
@@ -177,8 +177,8 @@ void serial_init(void)
 /** Configures the board hardware and chip peripherals for the demo's functionality. */
 void SetupHardware(void)
 {
-	/* Disable watchdog if enabled by bootloader/fuses */
-	MCUSR &= ~(1 << WDRF);
+	/* Disable watchdog */
+  MCUSR = 0;
 	wdt_disable();
 
 	/* Disable clock division */

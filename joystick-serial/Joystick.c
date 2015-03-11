@@ -95,7 +95,7 @@ static inline void handle_packet(void)
       break;
     case BYTE_STATUS:
       break;
-    case BYTE_START_SPOOF:
+    case BYTE_START:
       break;
     case BYTE_SPOOF_DATA:
       break;
@@ -138,9 +138,9 @@ void serial_init(void)
 /** Configures the board hardware and chip peripherals for the demo's functionality. */
 void SetupHardware(void)
 {
-	/* Disable watchdog if enabled by bootloader/fuses */
-	MCUSR &= ~(1 << WDRF);
-	wdt_disable();
+  /* Disable watchdog */
+  MCUSR = 0;
+  wdt_disable();
 
 	/* Disable clock division */
 	clock_prescale_set(clock_div_1);

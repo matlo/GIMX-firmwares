@@ -38,10 +38,6 @@
 #include <LUFA/Drivers/Peripheral/Serial.h>
 #include "../adapter_protocol.h"
 
-#define LED_CONFIG  (DDRD |= (1<<6))
-#define LED_OFF   (PORTD &= ~(1<<6))
-#define LED_ON    (PORTD |= (1<<6))
-
 #define USART_BAUDRATE 500000
 #define USART_DOUBLE_SPEED false
 
@@ -82,7 +78,7 @@ static volatile unsigned char spoofReplyLen = 0;
 
 void forceHardReset(void)
 {
-  LED_ON;
+  LEDs_TurnOnLEDs(LEDS_ALL_LEDS);
   cli(); // disable interrupts
   wdt_enable(WDTO_15MS); // enable watchdog
   while(1); // wait for watchdog to reset processor
@@ -136,8 +132,8 @@ static inline void handle_packet(void)
       Serial_SendByte(BYTE_LEN_1_BYTE);
       Serial_SendByte(started);
       break;
-    case BYTE_START_SPOOF:
-      Serial_SendByte(BYTE_START_SPOOF);
+    case BYTE_START:
+      Serial_SendByte(BYTE_START);
       Serial_SendByte(BYTE_LEN_1_BYTE);
       Serial_SendByte(started);
       started = 1;
@@ -188,8 +184,9 @@ void serial_init(void)
 /** Configures the board hardware and chip peripherals for the demo's functionality. */
 void SetupHardware(void)
 {
+  MCUSR = 0;
+
 	/* Disable watchdog if enabled by bootloader/fuses */
-	MCUSR &= ~(1 << WDRF);
 	wdt_disable();
 
 	/* Disable clock division */
@@ -198,8 +195,6 @@ void SetupHardware(void)
   serial_init();
 
   GlobalInterruptEnable();
-
-  LED_CONFIG;
 
 	/* Hardware Initialization */
 	LEDs_Init();
@@ -345,7 +340,7 @@ void SendNextReport(void)
 
 		/* Write IN Report Data */
 		Endpoint_Write_Stream_LE(report, sizeof(report), NULL);
-		
+
 		sendReport = 0;
 
 		/* Finalize the stream transfer to send the last packet */
@@ -409,10 +404,10 @@ void HID_Task(void)
 	/* Device must be connected and configured for the task to run */
 	if (USB_DeviceState != DEVICE_STATE_Configured)
 	  return;
-	  
-	/* Send the next keypress report to the host */
+
+  /* Send the next keypress report to the host */
 	SendNextReport();
-		
+
 	/* Process the LED report sent from the host */
 	ReceiveNextReport();
 }

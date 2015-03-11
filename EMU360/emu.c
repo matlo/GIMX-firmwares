@@ -183,8 +183,8 @@ void serial_init(void)
 /** Configures the board hardware and chip peripherals for the demo's functionality. */
 void SetupHardware(void)
 {
-  /* Disable watchdog if enabled by bootloader/fuses */
-  MCUSR &= ~(1 << WDRF);
+  /* Disable watchdog */
+  MCUSR = 0;
   wdt_disable();
 
   /* Disable clock division */
@@ -248,6 +248,8 @@ static unsigned char response = 0;
  */
 void EVENT_USB_Device_ControlRequest(void)
 {
+  static char buffer[FIXED_CONTROL_ENDPOINT_SIZE];
+
   if(USB_ControlRequest.bmRequestType & REQTYPE_VENDOR)
   {
     if(!spoof_initialized)
@@ -255,7 +257,7 @@ void EVENT_USB_Device_ControlRequest(void)
       if( !(USB_ControlRequest.bmRequestType & REQDIR_DEVICETOHOST) )
       {
         Endpoint_ClearSETUP();
-        Endpoint_Read_Control_Stream_LE(buf, USB_ControlRequest.wLength);
+        Endpoint_Read_Control_Stream_LE(buffer, USB_ControlRequest.wLength);
         Endpoint_ClearIN();
       }
       spoofReply = 0;
@@ -283,7 +285,7 @@ void EVENT_USB_Device_ControlRequest(void)
       }
       else
       {
-        Serial_SendData(buf, USB_ControlRequest.wLength);
+        Serial_SendData(buffer, USB_ControlRequest.wLength);
       }
     }
     else
@@ -323,7 +325,7 @@ void EVENT_USB_Device_ControlRequest(void)
       else
       {
         Endpoint_ClearSETUP();
-        Endpoint_Read_Control_Stream_LE(buf, USB_ControlRequest.wLength);
+        Endpoint_Read_Control_Stream_LE(buffer, USB_ControlRequest.wLength);
         Endpoint_ClearIN();
       }
     }
