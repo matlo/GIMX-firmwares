@@ -43,29 +43,19 @@
 #define USART_DOUBLE_SPEED false
 
 /*
- * The reference report data.
+ * The interrupt in report.
  */
-static uint8_t report[20] = {
-      0x00,//type
-      0x14,//size
-      0x00,0x00,//buttons
-      0x00,//ltrigger
-      0x00,//rtrigger
-      0x00,0x00,//xaxis
-      0x00,0x00,//yaxis
-      0x00,0x00,//zaxis
-      0x00,0x00,//taxis
-      0x00,0x00,0x00,0x00,0x00,0x00
-};
+static uint8_t report[INTERRUPT_EPSIZE] = {};
 
 static uint8_t* pdata;
 static unsigned char i = 0;
 
 /*
- * These variables are used in both the main and serial interrupt,
+ * These variables are used in both the main and the serial interrupt,
  * therefore they have to be declared as volatile.
  */
 static volatile unsigned char sendReport = 0;
+static volatile unsigned char reportLen = 0;
 static volatile unsigned char started = 0;
 static volatile unsigned char packet_type = 0;
 static volatile unsigned char value_len = 0;
@@ -103,7 +93,7 @@ int main(void)
 
 static inline void send_spoof_header(void)
 {
-  Serial_SendByte(BYTE_SPOOF_DATA);
+  Serial_SendByte(BYTE_CONTROL_DATA);
   if( USB_ControlRequest.bmRequestType & REQDIR_DEVICETOHOST )
   {
     Serial_SendByte(sizeof(USB_ControlRequest));
@@ -135,15 +125,16 @@ static inline void handle_packet(void)
       Serial_SendByte(spoof_initialized);
       started = 1;
       break;
-    case BYTE_SPOOF_DATA:
+    case BYTE_CONTROL_DATA:
       spoofReply = 1;
       spoofReplyLen = value_len;
       break;
     case BYTE_RESET:
       forceHardReset();
       break;
-    case BYTE_SEND_REPORT:
+    case BYTE_IN_REPORT:
       sendReport = 1;
+      reportLen = value_len;
       //no answer
       break;
   }
@@ -155,7 +146,7 @@ ISR(USART1_RX_vect)
 {
   packet_type = UDR1;
   value_len = Serial_BlockingReceiveByte();
-  if(packet_type == BYTE_SEND_REPORT)
+  if(packet_type == BYTE_IN_REPORT)
   {
     pdata = report;
   }
@@ -246,16 +237,6 @@ const char PROGMEM request144_index_4[] = {
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-static struct
-{
-  struct
-  {
-    unsigned char type;
-    unsigned char length;
-  } header;
-  unsigned char buffer[INTERRUPT_EPSIZE];
-} packet = { .header.type = BYTE_SPOOF_DATA };
-
 /** Event handler for the USB_ControlRequest event. This is used to catch and process control requests sent to
  *  the device from the USB host before passing along unhandled control requests to the library for processing
  *  internally.
@@ -319,14 +300,9 @@ void EVENT_USB_Device_ControlRequest(void)
       {
         if(USB_ControlRequest.bRequest == REQ_GetInterface)
         {
-          packet.header.length = sizeof(USB_ControlRequest);
-          memcpy(packet.buffer, &USB_ControlRequest, sizeof(USB_ControlRequest));
-
-          Serial_SendData(&packet, sizeof(packet.header) + packet.header.length);
-
-          while(!spoofReply);
+          unsigned char data[1] = { 0x00 };
           Endpoint_ClearSETUP();
-          Endpoint_Write_Control_Stream_LE(buf, spoofReplyLen);
+          Endpoint_Write_Control_Stream_LE(data, sizeof(data));
           Endpoint_ClearOUT();
         }
         else
@@ -338,14 +314,9 @@ void EVENT_USB_Device_ControlRequest(void)
       {
         if(USB_ControlRequest.bRequest == REQ_SetInterface)
         {
-          packet.header.length = (sizeof(USB_ControlRequest) + USB_ControlRequest.wLength) & 0xFF;
-          memcpy(packet.buffer, &USB_ControlRequest, sizeof(USB_ControlRequest));
-
           Endpoint_ClearSETUP();
-          Endpoint_Read_Control_Stream_LE(packet.buffer + sizeof(USB_ControlRequest), USB_ControlRequest.wLength);
+          // wLength is 0
           Endpoint_ClearIN();
-
-          Serial_SendData(&packet, sizeof(packet.header) + packet.header.length);
         }
         else
         {
@@ -379,7 +350,7 @@ void SendNextReport(void)
     while (!Endpoint_IsINReady()) {}
 
     /* Write IN Report Data */
-    Endpoint_Write_Stream_LE(report, sizeof(report), NULL);
+    Endpoint_Write_Stream_LE(report, reportLen, NULL);
 
     sendReport = 0;
 
@@ -425,13 +396,13 @@ void ReceiveNextReport(void)
 
 		if(length)
 		{
-		  switch(packet.buffer[0])
-		  {
-		    default:
-		      packet.header.length = length & 0xFF;
-		      Serial_SendData(&packet, sizeof(packet.header) + packet.header.length);
-		      break;
-		  }
+      packet.header.length = length & 0xFF;
+      Serial_SendData(&packet, sizeof(packet.header) + packet.header.length);
+
+      if(!spoof_initialized && packet.buffer[0] == 0x06 && packet.buffer[1] == 0x20)
+      {
+        spoof_initialized = 1;
+      }
 		}
   }
 }
