@@ -116,7 +116,7 @@ int main(void)
 
 static inline void send_spoof_header(void)
 {
-  Serial_SendByte(BYTE_SPOOF_DATA);
+  Serial_SendByte(BYTE_CONTROL_DATA);
   if( USB_ControlRequest.bmRequestType & REQDIR_DEVICETOHOST )
   {
     Serial_SendByte(sizeof(USB_ControlRequest));
@@ -148,14 +148,14 @@ static inline void handle_packet(void)
       Serial_SendByte(started);
       started = 1;
       break;
-    case BYTE_SPOOF_DATA:
+    case BYTE_CONTROL_DATA:
       spoofReply = 1;
       spoofReplyLen = value_len;
       break;
     case BYTE_RESET:
       forceHardReset();
       break;
-    case BYTE_SEND_REPORT:
+    case BYTE_IN_REPORT:
       sendReport = 1;
       //no answer
       break;
@@ -168,7 +168,7 @@ ISR(USART1_RX_vect)
 {
   packet_type = UDR1;
   value_len = Serial_BlockingReceiveByte();
-  if(packet_type == BYTE_SEND_REPORT)
+  if(packet_type == BYTE_IN_REPORT)
   {
     pdata = report;
   }

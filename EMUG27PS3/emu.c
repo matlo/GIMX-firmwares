@@ -129,14 +129,14 @@ static inline void handle_packet(void)
       Serial_SendByte(started);
       started = 1;
       break;
-    case BYTE_SPOOF_DATA:
+    case BYTE_CONTROL_DATA:
       spoofReply = 1;
       spoofReplyLen = value_len;
       break;
     case BYTE_RESET:
       forceHardReset();
       break;
-    case BYTE_SEND_REPORT:
+    case BYTE_IN_REPORT:
       sendReport = 1;
       //no answer
       break;
@@ -150,7 +150,7 @@ ISR(USART1_RX_vect)
   PIN_ON(4);
   packet_type = UDR1;
   value_len = Serial_BlockingReceiveByte();
-  if(packet_type == BYTE_SEND_REPORT)
+  if(packet_type == BYTE_IN_REPORT)
   {
     pdata = (uint8_t*)&report;
   }
@@ -311,7 +311,7 @@ static unsigned char nbReports = 0;
 static unsigned char info[] = { BYTE_DEBUG, BYTE_LEN_0_BYTE };
 #endif
 
-//static unsigned char inReportSent[] = { BYTE_SEND_REPORT, BYTE_LEN_0_BYTE };
+//static unsigned char inReportSent[] = { BYTE_IN_REPORT, BYTE_LEN_0_BYTE };
 
 /** Sends the next HID report to the host, via the IN endpoint. */
 void SendNextReport(void)
