@@ -36,6 +36,8 @@
  
 #include "emu.h"
 
+#define MAX_CONTROL_TRANSFER_SIZE 64
+
 uint8_t EEMEM eeSlaveBdaddr[6] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
 uint8_t EEMEM eeMasterBdaddr[6] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 uint8_t EEMEM eeLinkKey[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
@@ -177,7 +179,7 @@ const char PROGMEM buf12[] = {
  */
 void EVENT_USB_Device_ControlRequest(void)
 {
-  static char buffer[FIXED_CONTROL_ENDPOINT_SIZE];
+  static unsigned char buffer[MAX_CONTROL_TRANSFER_SIZE];
   unsigned char len;
 
   /* Handle HID Class specific requests */

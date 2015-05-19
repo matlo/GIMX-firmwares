@@ -40,6 +40,8 @@
 
 #define USART_BAUDRATE 500000
 
+#define MAX_CONTROL_TRANSFER_SIZE 64
+
 /*
  * The report data.
  * see http://euc.jp/periphs/xbox-controller.ja.html
@@ -124,7 +126,7 @@ static inline void handle_packet(void)
   }
 }
 
-static unsigned char buf[64];
+static unsigned char buf[MAX_CONTROL_TRANSFER_SIZE];
 
 ISR(USART1_RX_vect)
 {

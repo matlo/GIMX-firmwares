@@ -38,6 +38,8 @@
 #include <LUFA/Drivers/Peripheral/Serial.h>
 #include "../adapter_protocol.h"
 
+#define MAX_CONTROL_TRANSFER_SIZE 64
+
 #define USART_BAUDRATE 500000
 
 /*
@@ -106,7 +108,7 @@ static inline void handle_packet(void)
   }
 }
 
-static unsigned char buf[64];
+static unsigned char buf[MAX_CONTROL_TRANSFER_SIZE];
 
 ISR(USART1_RX_vect)
 {

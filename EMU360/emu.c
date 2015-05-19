@@ -39,6 +39,8 @@
 #include <avr/wdt.h>
 #include "../adapter_protocol.h"
 
+#define MAX_CONTROL_TRANSFER_SIZE 64
+
 #define USART_BAUDRATE 500000
 #define USART_DOUBLE_SPEED false
 
@@ -151,7 +153,7 @@ static inline void handle_packet(void)
   }
 }
 
-static unsigned char buf[64];
+static unsigned char buf[MAX_CONTROL_TRANSFER_SIZE];
 
 ISR(USART1_RX_vect)
 {
@@ -248,7 +250,7 @@ static unsigned char response = 0;
  */
 void EVENT_USB_Device_ControlRequest(void)
 {
-  static char buffer[FIXED_CONTROL_ENDPOINT_SIZE];
+  static unsigned char buffer[MAX_CONTROL_TRANSFER_SIZE];
 
   if(USB_ControlRequest.bmRequestType & REQTYPE_VENDOR)
   {
