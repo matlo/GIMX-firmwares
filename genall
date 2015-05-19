@@ -5,7 +5,10 @@ EMUPS4
 EMU360
 EMUPS3
 EMUXBOX
-joystick-serial"
+joystick-serial
+EMUT300RSPS4
+EMUG27PS3
+EMUXONE"
 
 TARGETS="
 atmega32u4
@@ -17,20 +20,45 @@ at90usb647
 at90usb646
 at90usb162"
 
-mkdir firmwares
+VERSION=`cat version`
+
+echo "Version number? (default: "$VERSION")"
+
+read NEW_VERSION
+
+if [ -z $NEW_VERSION ]
+then
+  NEW_VERSION=$VERSION
+fi
+
+if [ -z $NEW_VERSION ]
+then
+  echo No version specified!
+  exit
+fi
+
+echo $NEW_VERSION > version
+
+DIR="firmwares-$NEW_VERSION"
+
+rm -rf $DIR $DIR.zip
+
+mkdir $DIR
 
 for FIRMWARE in $FIRMWARES
 do
-  mkdir firmwares/$FIRMWARE
+  echo Making $FIRMWARE:
+  mkdir $DIR/$FIRMWARE
   cd $FIRMWARE
-  make clean
+  make clean > /dev/null
   for TARGET in $TARGETS
   do
-    make MCU=$TARGET
-    mv *.hex ../firmwares/$FIRMWARE/$TARGET.hex
-    make clean
+    echo "* $TARGET"
+    make MCU=$TARGET > /dev/null
+    mv *.hex ../$DIR/$FIRMWARE/$TARGET.hex
+    make clean > /dev/null
   done
   cd ..
 done
 
-zip -r firmwares.zip firmwares
+zip -r $DIR.zip $DIR
