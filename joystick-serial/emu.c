@@ -30,11 +30,12 @@
 
 /** \file
  *
- *  Main source file for the Joystick demo. This file contains the main tasks of the demo and
+ *  Main source file for the controller. This file contains the main tasks and
  *  is responsible for the initial application hardware configuration.
  */
 
-#include "Joystick.h"
+#include "emu.h"
+
 #include <LUFA/Drivers/Peripheral/Serial.h>
 #include "../adapter_protocol.h"
 
