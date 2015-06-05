@@ -34,7 +34,7 @@
  *  is responsible for the initial application hardware configuration.
  */
 
-#include "emu.h"
+#include "../EMUJOYSTICKPS3/emu.h"
 
 #include <LUFA/Drivers/Peripheral/Serial.h>
 #include "../adapter_protocol.h"
