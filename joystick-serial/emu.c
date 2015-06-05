@@ -42,6 +42,7 @@
 #define MAX_CONTROL_TRANSFER_SIZE 64
 
 #define USART_BAUDRATE 500000
+#define USART_DOUBLE_SPEED false
 
 /*
  * The reference report data.
@@ -64,6 +65,7 @@ static unsigned char i = 0;
  * therefore they have to be declared as volatile.
  */
 static volatile unsigned char sendReport = 0;
+static volatile unsigned char started = 0;
 static volatile unsigned char packet_type = 0;
 static volatile unsigned char value_len = 0;
 
@@ -97,8 +99,15 @@ static inline void handle_packet(void)
       Serial_SendByte(BYTE_TYPE_JOYSTICK);
       break;
     case BYTE_STATUS:
+      Serial_SendByte(BYTE_STATUS);
+      Serial_SendByte(BYTE_LEN_1_BYTE);
+      Serial_SendByte(started);
       break;
     case BYTE_START:
+      Serial_SendByte(BYTE_START);
+      Serial_SendByte(BYTE_LEN_1_BYTE);
+      Serial_SendByte(started);
+      started = 1;
       break;
     case BYTE_CONTROL_DATA:
       break;
@@ -133,7 +142,7 @@ ISR(USART1_RX_vect)
 
 void serial_init(void)
 {
-  Serial_Init(USART_BAUDRATE, false);
+  Serial_Init(USART_BAUDRATE, USART_DOUBLE_SPEED);
 
   UCSR1B |= (1 << RXCIE1); // Enable the USART Receive Complete interrupt (USART_RXC)
 }
@@ -154,6 +163,8 @@ void SetupHardware(void)
 
 	/* Hardware Initialization */
 	LEDs_Init();
+
+  while(!started);
 
 	USB_Init();
 }
@@ -184,7 +195,7 @@ void EVENT_USB_Device_ConfigurationChanged(void)
 	bool ConfigSuccess = true;
 
 	/* Setup HID Report Endpoint */
-	ConfigSuccess &= Endpoint_ConfigureEndpoint(JOYSTICK_EPNUM, EP_TYPE_INTERRUPT, JOYSTICK_EPSIZE, 1);
+	ConfigSuccess &= Endpoint_ConfigureEndpoint(IN_EPNUM, EP_TYPE_INTERRUPT, EPSIZE, 1);
 
 	/* Indicate endpoint configuration success or failure */
 	//LEDs_SetAllLEDs(ConfigSuccess ? LEDMASK_USB_READY : LEDMASK_USB_ERROR);
@@ -235,7 +246,7 @@ void EVENT_USB_Device_ControlRequest(void)
 void SendNextReport(void)
 {
   /* Select the IN Report Endpoint */
-  Endpoint_SelectEndpoint(JOYSTICK_EPNUM);
+	Endpoint_SelectEndpoint(IN_EPNUM);
 
   if (sendReport)
   {

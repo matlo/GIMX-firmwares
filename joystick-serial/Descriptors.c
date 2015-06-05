@@ -226,9 +226,9 @@ const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 		{
 			.Header                 = {.Size = sizeof(USB_Descriptor_Endpoint_t), .Type = DTYPE_Endpoint},
 
-			.EndpointAddress        = JOYSTICK_EPNUM,
+			.EndpointAddress        = IN_EPNUM,
 			.Attributes             = (EP_TYPE_INTERRUPT | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
-			.EndpointSize           = JOYSTICK_EPSIZE,
+			.EndpointSize           = EPSIZE,
 			.PollingIntervalMS      = 0x01
 		}
 };

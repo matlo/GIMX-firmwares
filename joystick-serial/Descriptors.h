@@ -37,7 +37,7 @@
 #define _DESCRIPTORS_H_
 
 	/* Includes: */
-		#include <LUFA/Drivers/USB/USB.h>
+		#include "LUFA/Drivers/USB/USB.h"
 
 		#include <avr/pgmspace.h>
 
@@ -51,15 +51,15 @@
 			USB_Descriptor_Configuration_Header_t Config;
 			USB_Descriptor_Interface_t            HID_Interface;
 			USB_HID_Descriptor_HID_t              HID_JoystickHID;
-	        USB_Descriptor_Endpoint_t             HID_ReportINEndpoint;
+			USB_Descriptor_Endpoint_t             HID_ReportINEndpoint;
 		} USB_Descriptor_Configuration_t;
 
 	/* Macros: */
 		/** Endpoint number of the Joystick HID reporting IN endpoint. */
-		#define JOYSTICK_EPNUM            (ENDPOINT_DIR_IN | 1)
+		#define IN_EPNUM            (ENDPOINT_DIR_IN | 1)
 
 		/** Size in bytes of the Joystick HID reporting IN endpoint. */
-		#define JOYSTICK_EPSIZE           64
+		#define EPSIZE           64
 
 		/** Descriptor header type value, to indicate a HID class HID descriptor. */
 		#define DTYPE_HID                 0x21
