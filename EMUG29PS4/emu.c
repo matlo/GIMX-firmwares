@@ -433,6 +433,7 @@ void ReceiveNextReport(void)
 
 		if(length)
 		{
+		  packet.header.length = length & 0xFF;
       Serial_SendData(&packet, sizeof(packet.header) + packet.header.length);
 		}
 	}
