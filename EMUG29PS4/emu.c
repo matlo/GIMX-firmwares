@@ -138,7 +138,7 @@ static inline void handle_packet(void)
     case BYTE_TYPE:
       Serial_SendByte(BYTE_TYPE);
       Serial_SendByte(BYTE_LEN_1_BYTE);
-      Serial_SendByte(BYTE_TYPE_T300RS_PS4);
+      Serial_SendByte(BYTE_TYPE_G29_PS4);
       break;
     case BYTE_STATUS:
       Serial_SendByte(BYTE_STATUS);
