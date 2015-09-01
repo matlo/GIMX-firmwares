@@ -208,7 +208,7 @@ const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
       .EndpointAddress        = IN_EPNUM,
       .Attributes             = (EP_TYPE_INTERRUPT | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
       .EndpointSize           = EPSIZE,
-      .PollingIntervalMS      = 0x0A
+      .PollingIntervalMS      = 0x05
     },
 		
 	.OutEndpoint =
@@ -218,7 +218,7 @@ const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 			.EndpointAddress        = OUT_EPNUM,
 			.Attributes             = (EP_TYPE_INTERRUPT | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
 			.EndpointSize           = EPSIZE,
-			.PollingIntervalMS      = 0x0A
+			.PollingIntervalMS      = 0x05
 		}
 };
 
