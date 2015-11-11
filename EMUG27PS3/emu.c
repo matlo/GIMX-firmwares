@@ -332,7 +332,7 @@ void SendNextReport(void)
     while (!Endpoint_IsINReady()) {}
 
 		/* Write IN Report Data */
-		Endpoint_Write_Stream_LE(&report, 7, NULL);
+		Endpoint_Write_Stream_LE(&report, sizeof(report), NULL);
 
 		/* Finalize the stream transfer to send the last packet */
 		Endpoint_ClearIN();
@@ -363,7 +363,7 @@ void ReceiveNextReport(void)
       unsigned char length;
     } header;
     unsigned char buffer[EPSIZE];
-  } packet = { .header.type = BYTE_DEBUG };
+  } packet = { .header.type = BYTE_OUT_REPORT };
 
   uint16_t length = 0;
 
