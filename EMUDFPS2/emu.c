@@ -58,13 +58,12 @@
  */
 static struct __attribute__ ((packed))
 {
-  unsigned char hatAndButtons; //4 LSB = hat, 4 MSB = buttons
-  unsigned short buttons;
-  unsigned short wheel; //big-endian, 14 MSB = axis
+  unsigned short buttonsAndWheel; //6 MSB = buttons, 10 LSB = axis
+  unsigned char buttons;
+  unsigned char unknown;
+  unsigned char hat;
   unsigned char gasPedal;
   unsigned char brakePedal;
-  unsigned char clutchPedal;
-  unsigned char unknown[3];
 } report;
 
 static uint8_t* pdata;
@@ -118,7 +117,7 @@ static inline void handle_packet(void)
     case BYTE_TYPE:
       Serial_SendByte(BYTE_TYPE);
       Serial_SendByte(BYTE_LEN_1_BYTE);
-      Serial_SendByte(BYTE_TYPE_G27_PS3);
+      Serial_SendByte(BYTE_TYPE_DF_PS2);
       break;
     case BYTE_STATUS:
       Serial_SendByte(BYTE_STATUS);

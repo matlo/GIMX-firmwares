@@ -9,7 +9,7 @@
 /*
   Copyright 2010  Denver Gingerich (denver [at] ossguy [dot] com)
       Based on code by Dean Camera (dean [at] fourwalledcubicle [dot] com)
-	  
+
   Permission to use, copy, modify, distribute, and sell this 
   software and its documentation for any purpose is hereby granted
   without fee, provided that the above copyright notice appear in 
@@ -46,120 +46,57 @@
  */
 const USB_Descriptor_HIDReport_Datatype_t PROGMEM Report[] =
 {
-  0x05, 0x01,         /*  Usage Page (Desktop),               */
-  0x09, 0x04,         /*  Usage (Joystik),                    */
-  0xA1, 0x01,         /*  Collection (Application),           */
-  0x14,               /*      Logical Minimum (0),            */
-  0x25, 0x07,         /*      Logical Maximum (7),            */
-  0x34,               /*      Physical Minimum (0),           */
-  0x46, 0x3B, 0x01,   /*      Physical Maximum (315),         */
-  0x65, 0x14,         /*      Unit (Degrees),                 */
-  0x09, 0x39,         /*      Usage (Hat Switch),             */
-  0x75, 0x04,         /*      Report Size (4),                */
-  0x95, 0x01,         /*      Report Count (1),               */
-  0x81, 0x42,         /*      Input (Variable, Null State),   */
-  0x64,               /*      Unit,                           */
-  0x25, 0x01,         /*      Logical Maximum (1),            */
-  0x45, 0x01,         /*      Physical Maximum (1),           */
-  0x05, 0x09,         /*      Usage Page (Button),            */
-  0x19, 0x01,         /*      Usage Minimum (01h),            */
-  0x29, 0x13,         /*      Usage Maximum (13h),            */
-  0x75, 0x01,         /*      Report Size (1),                */
-  0x95, 0x13,         /*      Report Count (19),              */
-  0x81, 0x02,         /*      Input (Variable),               */
-  0x06, 0x00, 0xFF,   /*      Usage Page (FF00h),             */
-  0x09, 0x01,         /*      Usage (01h),                    */
-  0x95, 0x03,         /*      Report Count (3),               */
-  0x81, 0x02,         /*      Input (Variable),               */
-  0x26, 0xFF, 0x3F,   /*      Logical Maximum (16383),        */
-  0x46, 0xFF, 0x3F,   /*      Physical Maximum (16383),       */
-  0x75, 0x0E,         /*      Report Size (14),               */
-  0x95, 0x01,         /*      Report Count (1),               */
-  0x05, 0x01,         /*      Usage Page (Desktop),           */
-  0x09, 0x30,         /*      Usage (X),                      */
-  0x81, 0x02,         /*      Input (Variable),               */
-  0x26, 0xFF, 0x00,   /*      Logical Maximum (255),          */
-  0x46, 0xFF, 0x00,   /*      Physical Maximum (255),         */
-  0x75, 0x08,         /*      Report Size (8),                */
-  0x95, 0x03,         /*      Report Count (3),               */
-  0x09, 0x32,         /*      Usage (Z),                      */
-  0x09, 0x35,         /*      Usage (Rz),                     */
-  0x09, 0x31,         /*      Usage (Y),                      */
-  0x81, 0x02,         /*      Input (Variable),               */
-  0x06, 0x00, 0xFF,   /*      Usage Page (FF00h),             */
-  0x09, 0x04,         /*      Usage (04h),                    */
-  0x95, 0x03,         /*      Report Count (3),               */
-  0x81, 0x02,         /*      Input (Variable),               */
-  0x95, 0x07,         /*      Report Count (7),               */
-  0x06, 0x00, 0xFF,   /*      Usage Page (FF00h),             */
-  0x09, 0x02,         /*      Usage (02h),                    */
-  0x91, 0x02,         /*      Output (Variable),              */
-  0x95, 0x90,         /*      Report Count (144),             */
-  0x09, 0x03,         /*      Usage (03h),                    */
-  0xB1, 0x02,         /*      Feature (Variable),             */
-  0xC0                /*  End Collection                      */
-  /*0x05, 0x01,
-  0x09, 0x04,
-  0xA1, 0x01,
-  0xA1, 0x02,
-  0x95, 0x01,
-  0x75, 0x0A,
-  0x15, 0x00,
-  0x26, 0xFF, 0x03,
-  0x35, 0x00,
-  0x46, 0xFF, 0x03,
-  0x09, 0x30,
-  0x81, 0x02,
-  0x95, 0x0C,
-  0x75, 0x01,
-  0x25, 0x01,
-  0x45, 0x01,
-  0x05, 0x09,
-  0x19, 0x01,
-  0x29, 0x0C,
-  0x81, 0x02,
-  0x95, 0x02,
-  0x06, 0x00, 0xFF,
-  0x09, 0x01,
-  0x81, 0x02,
-  0x05, 0x01,
-  0x09, 0x31,
-  0x26, 0xFF, 0x00,
-  0x46, 0xFF, 0x00,
-  0x95, 0x01,
-  0x75, 0x08,
-  0x81, 0x02,
-  0x25, 0x07,
-  0x46, 0x3B, 0x01,
-  0x75, 0x04,
-  0x65, 0x14,
-  0x09, 0x39,
-  0x81, 0x42,
-  0x75, 0x01,
-  0x95, 0x04,
-  0x65, 0x00,
-  0x06, 0x00, 0xFF,
-  0x09, 0x01,
-  0x25, 0x01,
-  0x45, 0x01,
-  0x81, 0x02,
-  0x95, 0x02,
-  0x75, 0x08,
-  0x26, 0xFF, 0x00,
-  0x46, 0xFF, 0x00,
-  0x09, 0x02,
-  0x81, 0x02,
-  0xC0,
-  0xA1, 0x02,
-  0x26, 0xFF, 0x00,
-  0x46, 0xFF, 0x00,
-  0x95, 0x07,
-  0x75, 0x08,
-  0x09, 0x03,
-  0x91, 0x02,
-  0x00, 0x00, 0x00,
-  0xC0,
-  0xC0*/
+  0x05, 0x01, /* Usage Page (Desktop), */
+  0x09, 0x04, /* Usage (Joystik), */
+  0xA1, 0x01, /* Collection (Application), */
+  0xA1, 0x02, /* Collection (Logical), */
+
+  0x95, 0x01, /* Report Count (1), */
+  0x75, 0x0E, /* Report Size (14), */
+  0x14, /* Logical Minimum (0), */
+  0x26, 0xFF, 0x3F, /* Logical Maximum (16383), */
+  0x34, /* Physical Minimum (0), */
+  0x46, 0xFF, 0x3F, /* Physical Maximum (16383), */
+  0x09, 0x30, /* Usage (X), */
+  0x81, 0x02, /* Input (Variable), */
+
+  0x95, 0x0E, /* Report Count (14), */
+  0x75, 0x01, /* Report Size (1), */
+  0x25, 0x01, /* Logical Maximum (1), */
+  0x45, 0x01, /* Physical Maximum (1), */
+  0x05, 0x09, /* Usage Page (Button), */
+  0x19, 0x01, /* Usage Minimum (01h), */
+  0x29, 0x0E, /* Usage Maximum (0Eh), */
+  0x81, 0x02, /* Input (Variable), */
+
+  0x05, 0x01, /* Usage Page (Desktop), */
+  0x95, 0x01, /* Report Count (1), */
+  0x75, 0x04, /* Report Size (4), */
+  0x25, 0x07, /* Logical Maximum (7), */
+  0x46, 0x3B, 0x01, /* Physical Maximum (315), */
+  0x65, 0x14, /* Unit (Degrees), */
+  0x09, 0x39, /* Usage (Hat Switch), */
+  0x81, 0x42, /* Input (Variable, Nullstate), */
+
+  0x65, 0x00, /* Unit, */
+  0x26, 0xFF, 0x00, /* Logical Maximum (255), */
+  0x46, 0xFF, 0x00, /* Physical Maximum (255), */
+  0x75, 0x08, /* Report Size (8), */
+  0x81, 0x01, /* Input (Constant), */
+  0x09, 0x31, /* Usage (Y), */
+  0x81, 0x02, /* Input (Variable), */
+
+  0x09, 0x35, /* Usage (Rz), */
+  0x81, 0x02, /* Input (Variable), */
+
+  0x81, 0x01, /* Input (Constant), */
+  0xC0, /* End Collection, */
+  0xA1, 0x02, /* Collection (Logical), */
+  0x09, 0x02, /* Usage (02h), */
+  0x95, 0x07, /* Report Count (7), */
+  0x91, 0x02, /* Output (Variable), */
+  0xC0, /* End Collection, */
+  0xC0 /* End Collection */
 };
 
 /** Device descriptor structure. This descriptor, located in FLASH memory, describes the overall
@@ -169,24 +106,24 @@ const USB_Descriptor_HIDReport_Datatype_t PROGMEM Report[] =
  */
 const USB_Descriptor_Device_t PROGMEM DeviceDescriptor =
 {
-	.Header                 = {.Size = sizeof(USB_Descriptor_Device_t), .Type = DTYPE_Device},
-		
-	.USBSpecification       = VERSION_BCD(02.00),
-	.Class                  = 0x00,
-	.SubClass               = 0x00,
-	.Protocol               = 0x00,
-				
-	.Endpoint0Size          = FIXED_CONTROL_ENDPOINT_SIZE,
-		
-	.VendorID               = 0x046d,
-	.ProductID              = 0xc29b,
-	.ReleaseNumber          = 0x1238,
-		
-	.ManufacturerStrIndex   = NO_DESCRIPTOR,
-	.ProductStrIndex        = 0x02,
-	.SerialNumStrIndex      = NO_DESCRIPTOR,
-		
-	.NumberOfConfigurations = FIXED_NUM_CONFIGURATIONS
+  .Header                 = {.Size = sizeof(USB_Descriptor_Device_t), .Type = DTYPE_Device},
+
+  .USBSpecification       = VERSION_BCD(01.00),
+  .Class                  = 0x00,
+  .SubClass               = 0x00,
+  .Protocol               = 0x00,
+
+  .Endpoint0Size          = FIXED_CONTROL_ENDPOINT_SIZE,
+
+  .VendorID               = 0x046d,
+  .ProductID              = 0xc298,
+  .ReleaseNumber          = 0x1106,
+
+  .ManufacturerStrIndex   = 0x03,
+  .ProductStrIndex        = 0x01,
+  .SerialNumStrIndex      = NO_DESCRIPTOR,
+
+  .NumberOfConfigurations = FIXED_NUM_CONFIGURATIONS
 };
 
 /** Configuration descriptor structure. This descriptor, located in FLASH memory, describes the usage
@@ -196,47 +133,47 @@ const USB_Descriptor_Device_t PROGMEM DeviceDescriptor =
  */
 const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 {
-	.Config = 
-		{
-			.Header                 = {.Size = sizeof(USB_Descriptor_Configuration_Header_t), .Type = DTYPE_Configuration},
+  .Config =
+    {
+      .Header                 = {.Size = sizeof(USB_Descriptor_Configuration_Header_t), .Type = DTYPE_Configuration},
 
-			.TotalConfigurationSize = sizeof(USB_Descriptor_Configuration_t),
-			.TotalInterfaces        = 1,
-				
-			.ConfigurationNumber    = 1,
-			.ConfigurationStrIndex  = NO_DESCRIPTOR,
-				
-			.ConfigAttributes       = USB_CONFIG_ATTR_RESERVED,
-			
-			.MaxPowerConsumption    = USB_CONFIG_POWER_MA(98)
-		},
-		
-	.Interface = 
-		{
-			.Header                 = {.Size = sizeof(USB_Descriptor_Interface_t), .Type = DTYPE_Interface},
+      .TotalConfigurationSize = sizeof(USB_Descriptor_Configuration_t),
+      .TotalInterfaces        = 1,
 
-			.InterfaceNumber        = 0x00,
-			.AlternateSetting       = 0x00,
-			
-			.TotalEndpoints         = 2,
-				
-			.Class                  = 0x03,
-			.SubClass               = 0x00,
-			.Protocol               = 0x00,
-				
-			.InterfaceStrIndex      = NO_DESCRIPTOR
-		},
+      .ConfigurationNumber    = 1,
+      .ConfigurationStrIndex  = NO_DESCRIPTOR,
 
-	.HID =
-		{  
-			.Header                 = {.Size = sizeof(USB_Descriptor_HID_t), .Type = DTYPE_HID},
-			
-			.HIDSpec                = 0x0111,
-			.CountryCode            = 0x21,
-			.TotalReportDescriptors = 1,
-			.HIDReportType          = DTYPE_Report,
-			.HIDReportLength        = sizeof(Report)
-		},
+      .ConfigAttributes       = USB_CONFIG_ATTR_RESERVED,
+
+      .MaxPowerConsumption    = USB_CONFIG_POWER_MA(80)
+    },
+
+  .Interface =
+    {
+      .Header                 = {.Size = sizeof(USB_Descriptor_Interface_t), .Type = DTYPE_Interface},
+
+      .InterfaceNumber        = 0x00,
+      .AlternateSetting       = 0x00,
+
+      .TotalEndpoints         = 2,
+
+      .Class                  = 0x03,
+      .SubClass               = 0x00,
+      .Protocol               = 0x00,
+
+      .InterfaceStrIndex      = NO_DESCRIPTOR
+    },
+
+  .HID =
+    {
+      .Header                 = {.Size = sizeof(USB_Descriptor_HID_t), .Type = DTYPE_HID},
+
+      .HIDSpec                = 0x0100,
+      .CountryCode            = 0x21,
+      .TotalReportDescriptors = 1,
+      .HIDReportType          = DTYPE_Report,
+      .HIDReportLength        = sizeof(Report)
+    },
 
   .InEndpoint =
     {
@@ -245,18 +182,18 @@ const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
       .EndpointAddress        = IN_EPNUM,
       .Attributes             = (EP_TYPE_INTERRUPT | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
       .EndpointSize           = EPSIZE,
-      .PollingIntervalMS      = 0x02
+      .PollingIntervalMS      = 0x0a
     },
-		
-	.OutEndpoint =
-		{
-			.Header                 = {.Size = sizeof(USB_Descriptor_Endpoint_t), .Type = DTYPE_Endpoint},
 
-			.EndpointAddress        = OUT_EPNUM,
-			.Attributes             = (EP_TYPE_INTERRUPT | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
-			.EndpointSize           = EPSIZE,
-			.PollingIntervalMS      = 0x02
-		}
+  .OutEndpoint =
+    {
+      .Header                 = {.Size = sizeof(USB_Descriptor_Endpoint_t), .Type = DTYPE_Endpoint},
+
+      .EndpointAddress        = OUT_EPNUM,
+      .Attributes             = (EP_TYPE_INTERRUPT | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
+      .EndpointSize           = EPSIZE,
+      .PollingIntervalMS      = 0x0a
+    }
 };
 
 /** Language descriptor structure. This descriptor, located in FLASH memory, is returned when the host requests
@@ -270,15 +207,26 @@ const USB_Descriptor_String_t PROGMEM LanguageString =
   .UnicodeString          = {LANGUAGE_ID_ENG}
 };
 
+/** Manufacturer descriptor string. This is a Unicode string containing the manufacturer details in human readable form,
+ *  and is read out upon request by the host when the appropriate string ID is requested, listed in the Device
+ *  Descriptor.
+ */
+const USB_Descriptor_String_t PROGMEM ManufacturerString =
+{
+  .Header                 = {.Size = USB_STRING_LEN(8), .Type = DTYPE_String},
+
+  .UnicodeString          = L"Logitech"
+};
+
 /** Product descriptor string. This is a Unicode string containing the product's details in human readable form,
  *  and is read out upon request by the host when the appropriate string ID is requested, listed in the Device
  *  Descriptor.
  */
 const USB_Descriptor_String_t PROGMEM ProductString =
 {
-	.Header                 = {.Size = USB_STRING_LEN(16), .Type = DTYPE_String},
+  .Header                 = {.Size = USB_STRING_LEN(26), .Type = DTYPE_String},
 
-	.UnicodeString          = L"G27 Racing Wheel"
+  .UnicodeString          = L"Logitech Driving Force Pro"
 };
 
 /** This function is called by the library when in device mode, and must be overridden (see library "USB Descriptors"
@@ -291,45 +239,49 @@ uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue,
                                     const uint8_t wIndex,
                                     const void** const DescriptorAddress)
 {
-	const uint8_t  DescriptorType   = (wValue >> 8);
-	const uint8_t  DescriptorNumber = (wValue & 0xFF);
+  const uint8_t  DescriptorType   = (wValue >> 8);
+  const uint8_t  DescriptorNumber = (wValue & 0xFF);
 
-	void*    Address = NULL;
-	uint16_t Size    = NO_DESCRIPTOR;
+  void*    Address = NULL;
+  uint16_t Size    = NO_DESCRIPTOR;
 
-	switch (DescriptorType)
-	{
-		case DTYPE_Device: 
-			Address = (void*)&DeviceDescriptor;
-			Size    = sizeof(USB_Descriptor_Device_t);
-			break;
-		case DTYPE_Configuration: 
-			Address = (void*)&ConfigurationDescriptor;
-			Size    = sizeof(USB_Descriptor_Configuration_t);
-			break;
-		case DTYPE_String: 
-			switch (DescriptorNumber)
-			{
+  switch (DescriptorType)
+  {
+    case DTYPE_Device:
+      Address = (void*)&DeviceDescriptor;
+      Size    = sizeof(USB_Descriptor_Device_t);
+      break;
+    case DTYPE_Configuration:
+      Address = (void*)&ConfigurationDescriptor;
+      Size    = sizeof(USB_Descriptor_Configuration_t);
+      break;
+    case DTYPE_String:
+      switch (DescriptorNumber)
+      {
         case 0x00:
           Address = (void*)&LanguageString;
           Size    = pgm_read_byte(&LanguageString.Header.Size);
           break;
-        case 0x02:
+        case 0x03:
+          Address = (void*)&ManufacturerString;
+          Size    = pgm_read_byte(&ManufacturerString.Header.Size);
+          break;
+        case 0x01:
           Address = (void*)&ProductString;
           Size    = pgm_read_byte(&ProductString.Header.Size);
           break;
-			}
-			break;
-		case DTYPE_HID:
-			Address = (void*)&ConfigurationDescriptor.HID;
-			Size    = sizeof(USB_Descriptor_HID_t);
-			break;
-		case DTYPE_Report:
-			Address = (void*)&Report;
-			Size    = sizeof(Report);
-			break;
-	}
-	
-	*DescriptorAddress = Address;
-	return Size;
+      }
+      break;
+    case DTYPE_HID:
+      Address = (void*)&ConfigurationDescriptor.HID;
+      Size    = sizeof(USB_Descriptor_HID_t);
+      break;
+    case DTYPE_Report:
+      Address = (void*)&Report;
+      Size    = sizeof(Report);
+      break;
+  }
+
+  *DescriptorAddress = Address;
+  return Size;
 }
