@@ -26,7 +26,8 @@
 #define BYTE_TYPE_T300RS_PS4 0x07
 #define BYTE_TYPE_G27_PS3    0x08
 #define BYTE_TYPE_G29_PS4    0x09
-
+#define BYTE_TYPE_DF_PS2     0x0a
+#define BYTE_TYPE_DFP_PS2    0x0b
 
 #define BYTE_STATUS_NSPOOFED 0x00
 #define BYTE_STATUS_SPOOFED  0x01
