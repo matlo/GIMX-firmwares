@@ -43,6 +43,7 @@
 #define USART_BAUDRATE 500000
 #define USART_DOUBLE_SPEED false
 
+#define REPORT_TYPE_OUTPUT  0x02
 #define REPORT_TYPE_FEATURE 0x03
 
 /*
@@ -64,19 +65,19 @@ static unsigned char reply = 0;
  * The reference report data.
  */
 static uint8_t report[49] = {
-			0x01, 0x00, 0x00, 0x00,
-			0x00, //0x01 = PS3 button
-			0x00, 0x7a, 0x80, 0x82,
-			0x7d, 0x00, 0x00, 0x00,
-			0x00, 0x00, 0x00, 0x00,
-			0x00, 0x00, 0x00, 0x00,
-			0x00, 0x00, 0x00, 0x00,
-			0x00, 0x00, 0x00, 0x00,
-			0x02, 0xee, 0x10, 0x00,
-			0x00, 0x00, 0x00, 0x02,
-			0xff, 0x77, 0x01, 0x80,
-			0x02, 0x1f, 0x02, 0x02,
-			0x01, 0x9c, 0x00, 0x05
+      0x01, 0x00, 0x00, 0x00,
+      0x00, //0x01 = PS3 button
+      0x00, 0x7a, 0x80, 0x82,
+      0x7d, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00,
+      0x02, 0xee, 0x10, 0x00,
+      0x00, 0x00, 0x00, 0x02,
+      0xff, 0x77, 0x01, 0x80,
+      0x02, 0x1f, 0x02, 0x02,
+      0x01, 0x9c, 0x00, 0x05
 };
 
 static uint8_t* pdata;
@@ -172,19 +173,19 @@ void serial_init(void)
 /** Configures the board hardware and chip peripherals for the demo's functionality. */
 void SetupHardware(void)
 {
-	/* Disable watchdog if enabled by bootloader/fuses */
-	MCUSR &= ~(1 << WDRF);
-	wdt_disable();
+  /* Disable watchdog if enabled by bootloader/fuses */
+  MCUSR &= ~(1 << WDRF);
+  wdt_disable();
 
-	/* Disable clock division */
-	clock_prescale_set(clock_div_1);
+  /* Disable clock division */
+  clock_prescale_set(clock_div_1);
 
   serial_init();
 
   GlobalInterruptEnable();
 
-	/* Hardware Initialization */
-	LEDs_Init();
+  /* Hardware Initialization */
+  LEDs_Init();
 
   while(!started);
 
@@ -196,8 +197,8 @@ void SetupHardware(void)
  */
 void EVENT_USB_Device_Connect(void)
 {
-	/* Indicate USB enumerating */
-	//LEDs_SetAllLEDs(LEDMASK_USB_ENUMERATING);
+  /* Indicate USB enumerating */
+  //LEDs_SetAllLEDs(LEDMASK_USB_ENUMERATING);
 }
 
 /** Event handler for the USB_Disconnect event. This indicates that the device is no longer connected to a host via
@@ -205,28 +206,28 @@ void EVENT_USB_Device_Connect(void)
  */
 void EVENT_USB_Device_Disconnect(void)
 {
-	/* Indicate USB not ready */
-	//LEDs_SetAllLEDs(LEDMASK_USB_NOTREADY);
+  /* Indicate USB not ready */
+  //LEDs_SetAllLEDs(LEDMASK_USB_NOTREADY);
 }
 
 /** Event handler for the USB_ConfigurationChanged event. This is fired when the host sets the current configuration
  *  of the USB device after enumeration, and configures the device endpoints.
  */
 void EVENT_USB_Device_ConfigurationChanged(void)
-{	
-	//LEDs_SetAllLEDs(LEDMASK_USB_READY);
+{
+  //LEDs_SetAllLEDs(LEDMASK_USB_READY);
 
-	if (!(Endpoint_ConfigureEndpoint(IN_EPNUM, EP_TYPE_INTERRUPT, EPSIZE, 1)))
-	{
-		//LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
-	}
-	
-	if (!(Endpoint_ConfigureEndpoint(OUT_EPNUM, EP_TYPE_INTERRUPT, EPSIZE, 1)))
-	{
-		//LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
-	}
-	
-	//USB_Device_EnableSOFEvents();
+  if (!(Endpoint_ConfigureEndpoint(IN_EPNUM, EP_TYPE_INTERRUPT, EPSIZE, 1)))
+  {
+    //LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
+  }
+
+  if (!(Endpoint_ConfigureEndpoint(OUT_EPNUM, EP_TYPE_INTERRUPT, EPSIZE, 1)))
+  {
+    //LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
+  }
+
+  //USB_Device_EnableSOFEvents();
 }
 
 const char PROGMEM report_01[] = {
@@ -374,11 +375,11 @@ void EVENT_USB_Device_ControlRequest(void)
   static unsigned char buffer[MAX_CONTROL_TRANSFER_SIZE];
 
   /* Handle HID Class specific requests */
-	switch (USB_ControlRequest.bRequest)
-	{
-		case REQ_GetReport:
-			if (USB_ControlRequest.bmRequestType == (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_INTERFACE))
-			{
+  switch (USB_ControlRequest.bRequest)
+  {
+    case REQ_GetReport:
+      if (USB_ControlRequest.bmRequestType == (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_INTERFACE))
+      {
         uint8_t reportType = USB_ControlRequest.wValue >> 8;
         uint8_t reportId = USB_ControlRequest.wValue & 0xff;
 
@@ -449,15 +450,21 @@ void EVENT_USB_Device_ControlRequest(void)
             Endpoint_ClearOUT();
           }
         }
-			}
-		
-			break;
-		case REQ_SetReport:
-			if (USB_ControlRequest.bmRequestType == (REQDIR_HOSTTODEVICE | REQTYPE_CLASS | REQREC_INTERFACE))
-			{
-				Endpoint_ClearSETUP();
-				Endpoint_Read_Control_Stream_LE(buffer, USB_ControlRequest.wLength);
-				Endpoint_ClearIN();
+      }
+
+      break;
+    case REQ_SetReport:
+      if (USB_ControlRequest.bmRequestType == (REQDIR_HOSTTODEVICE | REQTYPE_CLASS | REQREC_INTERFACE))
+      {
+        Endpoint_ClearSETUP();
+        enum Endpoint_ControlStream_RW_ErrorCodes_t error =
+                Endpoint_Read_Control_Stream_LE(buffer, USB_ControlRequest.wLength);
+        Endpoint_ClearIN();
+
+        if (error != ENDPOINT_RWCSTREAM_NoError)
+        {
+          break;
+        }
 
         uint8_t reportType = USB_ControlRequest.wValue >> 8;
         uint8_t reportId = USB_ControlRequest.wValue & 0xff;
@@ -474,39 +481,51 @@ void EVENT_USB_Device_ControlRequest(void)
               break;
           }
         }
-			}
-			
-			break;
+        else if (reportType == REPORT_TYPE_OUTPUT)
+        {
+          switch(reportId)
+          {
+            case 0x01:
+              Serial_SendByte(BYTE_OUT_REPORT);
+              Serial_SendByte(USB_ControlRequest.wLength + 1);
+              Serial_SendByte(0x01);
+              Serial_SendData(buffer, USB_ControlRequest.wLength);
+              break;
+          }
+        }
+      }
 
-	}
+      break;
+
+  }
 }
 
 /** Event handler for the USB device Start Of Frame event. */
 /*void EVENT_USB_Device_StartOfFrame(void)
 {
-	// One millisecond has elapsed.
+  // One millisecond has elapsed.
 }*/
 
 
 /** Sends the next HID report to the host, via the IN endpoint. */
 void SendNextReport(void)
 {
-	/* Select the IN Report Endpoint */
-	Endpoint_SelectEndpoint(IN_EPNUM);
+  /* Select the IN Report Endpoint */
+  Endpoint_SelectEndpoint(IN_EPNUM);
 
   if (sendReport)
   {
     /* Wait until the host is ready to accept another packet */
     while (!Endpoint_IsINReady()) {}
 
-		/* Write IN Report Data */
-		Endpoint_Write_Stream_LE(report, sizeof(report), NULL);
-		
-		sendReport = 0;
+    /* Write IN Report Data */
+    Endpoint_Write_Stream_LE(report, sizeof(report), NULL);
 
-		/* Finalize the stream transfer to send the last packet */
-		Endpoint_ClearIN();
-	}
+    sendReport = 0;
+
+    /* Finalize the stream transfer to send the last packet */
+    Endpoint_ClearIN();
+  }
 }
 
 /** Reads the next OUT report from the host from the OUT endpoint, if one has been sent. */
@@ -524,44 +543,44 @@ void ReceiveNextReport(void)
 
   uint16_t length = 0;
 
-	/* Select the OUT Report Endpoint */
-	Endpoint_SelectEndpoint(OUT_EPNUM);
+  /* Select the OUT Report Endpoint */
+  Endpoint_SelectEndpoint(OUT_EPNUM);
 
-	/* Check if OUT Endpoint contains a packet */
-	if (Endpoint_IsOUTReceived())
-	{
-		/* Check to see if the packet contains data */
-		if (Endpoint_IsReadWriteAllowed())
-		{
-		  /* Read OUT Report Data */
+  /* Check if OUT Endpoint contains a packet */
+  if (Endpoint_IsOUTReceived())
+  {
+    /* Check to see if the packet contains data */
+    if (Endpoint_IsReadWriteAllowed())
+    {
+      /* Read OUT Report Data */
       uint8_t ErrorCode = Endpoint_Read_Stream_LE(packet.buffer, sizeof(packet.buffer), &length);
       if(ErrorCode == ENDPOINT_RWSTREAM_NoError)
       {
         length = sizeof(packet.buffer);
       }
-		}
+    }
 
-		/* Handshake the OUT Endpoint - clear endpoint and ready for next report */
-		Endpoint_ClearOUT();
+    /* Handshake the OUT Endpoint - clear endpoint and ready for next report */
+    Endpoint_ClearOUT();
 
-		if(length)
-		{
-		  packet.header.length = length & 0xFF;
+    if(length)
+    {
+      packet.header.length = length & 0xFF;
       Serial_SendData(&packet, sizeof(packet.header) + packet.header.length);
-		}
-	}
+    }
+  }
 }
 
 /** Function to manage HID report generation and transmission to the host, when in report mode. */
 void HID_Task(void)
 {
-	/* Device must be connected and configured for the task to run */
-	if (USB_DeviceState != DEVICE_STATE_Configured)
-	  return;
-	  
-	/* Send the next keypress report to the host */
-	SendNextReport();
-		
-	/* Process the LED report sent from the host */
-	ReceiveNextReport();
+  /* Device must be connected and configured for the task to run */
+  if (USB_DeviceState != DEVICE_STATE_Configured)
+    return;
+
+  /* Send the next keypress report to the host */
+  SendNextReport();
+
+  /* Process the LED report sent from the host */
+  ReceiveNextReport();
 }
