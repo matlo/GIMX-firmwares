@@ -83,6 +83,8 @@ static uint8_t report[49] = {
 static uint8_t* pdata;
 static unsigned char i = 0;
 
+static unsigned char ready = 0;
+
 /*
  * These variables are used in both the main and serial interrupt,
  * therefore they have to be declared as volatile.
@@ -486,6 +488,7 @@ void EVENT_USB_Device_ControlRequest(void)
           switch(reportId)
           {
             case 0x01:
+              ready = 1;
               Serial_SendByte(BYTE_OUT_REPORT);
               Serial_SendByte(USB_ControlRequest.wLength + 1);
               Serial_SendByte(0x01);
@@ -510,6 +513,11 @@ void EVENT_USB_Device_ControlRequest(void)
 /** Sends the next HID report to the host, via the IN endpoint. */
 void SendNextReport(void)
 {
+  if (!ready)
+  {
+    return;
+  }
+
   /* Select the IN Report Endpoint */
   Endpoint_SelectEndpoint(IN_EPNUM);
 
