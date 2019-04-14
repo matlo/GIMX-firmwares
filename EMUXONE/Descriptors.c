@@ -55,7 +55,7 @@ const USB_Descriptor_Device_t PROGMEM DeviceDescriptor =
 		
 	.VendorID               = 0x045e,
 	.ProductID              = 0x02d1,
-	.ReleaseNumber          = 0x0101,
+	.ReleaseNumber          = 0x0203,
 		
 	.ManufacturerStrIndex   = 0x01,
 	.ProductStrIndex        = 0x02,
@@ -276,9 +276,9 @@ const USB_Descriptor_String_t PROGMEM ProductString =
 
 const USB_Descriptor_String_t PROGMEM SerialString =
 {
-  .Header                 = {.Size = USB_STRING_LEN(12), .Type = DTYPE_String},
+  .Header                 = {.Size = USB_STRING_LEN(7), .Type = DTYPE_String},
 
-  .UnicodeString          = L"7EED81401555"
+  .UnicodeString          = L"0000001"
 };
 
 /** This function is called by the library when in device mode, and must be overridden (see library "USB Descriptors"
