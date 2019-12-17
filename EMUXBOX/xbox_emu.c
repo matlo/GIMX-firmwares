@@ -1,5 +1,5 @@
 /*
-  Copyright 2013  Mathieu Laurendeau (mat.lau [at] laposte [dot] net)
+  Copyright 2019  Mathieu Laurendeau (mat.lau [at] laposte [dot] net)
 
   Redistributed under the GPLv3 licence.
 
@@ -30,7 +30,7 @@
 
 /** \file
  *
- *  Main source file for the Xbox v1 controller. This file contains the main tasks and
+ *  Main source file for the controller. This file contains the main tasks and
  *  is responsible for the initial application hardware configuration.
  */
  
@@ -38,9 +38,10 @@
 #include <LUFA/Drivers/Peripheral/Serial.h>
 #include "../adapter_protocol.h"
 
-#define USART_BAUDRATE 500000
-
 #define MAX_CONTROL_TRANSFER_SIZE 64
+
+#define USART_BAUDRATE 500000
+#define USART_DOUBLE_SPEED false
 
 /*
  * The report data.
@@ -77,12 +78,22 @@ static uint8_t* pdata;
 static unsigned char i = 0;
 
 /*
- * These variables are used in both the main and serial interrupt,
+ * These variables are used in both the main and the serial interrupt,
  * therefore they have to be declared as volatile.
  */
-static volatile unsigned char sendReport = 0;
+static volatile unsigned char sendReport = 1; // first input report is above
+static volatile unsigned char started = 0;
 static volatile unsigned char packet_type = 0;
 static volatile unsigned char value_len = 0;
+static volatile unsigned char initialized = 0; // inhibit further input reports until requested on control endpoint
+
+void forceHardReset(void)
+{
+  LEDs_TurnOnLEDs(LEDS_ALL_LEDS);
+  cli(); // disable interrupts
+  wdt_enable(WDTO_15MS); // enable watchdog
+  while(1); // wait for watchdog to reset processor
+}
 
 static inline int16_t Serial_BlockingReceiveByte(void)
 {
@@ -114,13 +125,21 @@ static inline void handle_packet(void)
       Serial_SendByte(BYTE_TYPE_XBOX);
       break;
     case BYTE_STATUS:
+      Serial_SendByte(BYTE_STATUS);
+      Serial_SendByte(BYTE_LEN_1_BYTE);
+      Serial_SendByte(started);
       break;
     case BYTE_START:
+      Serial_SendByte(BYTE_START);
+      Serial_SendByte(BYTE_LEN_1_BYTE);
+      Serial_SendByte(started);
+      started = 1;
       break;
-    case BYTE_CONTROL_DATA:
+    case BYTE_RESET:
+      forceHardReset();
       break;
     case BYTE_IN_REPORT:
-      sendReport = 1;
+      sendReport |= initialized;
       //no answer
       break;
   }
@@ -132,7 +151,7 @@ ISR(USART1_RX_vect)
 {
   packet_type = UDR1;
   value_len = Serial_BlockingReceiveByte();
-  if(packet_type == BYTE_IN_REPORT)
+  if(packet_type == BYTE_IN_REPORT && initialized)
   {
     pdata = report;
   }
@@ -150,7 +169,7 @@ ISR(USART1_RX_vect)
 
 void serial_init(void)
 {
-  Serial_Init(USART_BAUDRATE, false);
+  Serial_Init(USART_BAUDRATE, USART_DOUBLE_SPEED);
 
   UCSR1B |= (1 << RXCIE1); // Enable the USART Receive Complete interrupt (USART_RXC)
 }
@@ -171,6 +190,8 @@ void SetupHardware(void)
 
 	/* Hardware Initialization */
 	LEDs_Init();
+
+  while(!started);
 
   USB_Init();
 }
@@ -205,15 +226,31 @@ void EVENT_USB_Device_ConfigurationChanged(void)
     //LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
   }
 
-	/*if (!(Endpoint_ConfigureEndpoint(XBOX_OUT_EPNUM, EP_TYPE_INTERRUPT,
-		                             ENDPOINT_DIR_OUT, XBOX_EPSIZE,
-	                                 ENDPOINT_BANK_SINGLE)))
-	{
-		//LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
-	}*/
+  if (!(Endpoint_ConfigureEndpoint(XBOX_OUT_EPNUM, EP_TYPE_INTERRUPT, XBOX_EPSIZE, 1)))
+  {
+    //LEDs_SetAllLEDs(LEDMASK_USB_ERROR);
+  }
 	
 	//USB_Device_EnableSOFEvents();
 }
+
+const char PROGMEM vendor1[] =
+{
+        0x10, 0x42, 0x00, 0x01, 0x01, 0x02, 0x14, 0x06,
+        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
+};
+
+const char PROGMEM vendor2[] =
+{
+        0x00, 0x06, 0xff, 0xff, 0xff, 0xff
+};
+
+const char PROGMEM vendor3[] =
+{
+        0x00, 0x14, 0xff, 0x00, 0xff, 0xff, 0xff, 0xff,
+        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+        0xff, 0xff, 0xff, 0xff
+};
 
 /** Event handler for the USB_ControlRequest event. This is used to catch and process control requests sent to
  *  the device from the USB host before passing along unhandled control requests to the library for processing
@@ -221,7 +258,51 @@ void EVENT_USB_Device_ConfigurationChanged(void)
  */
 void EVENT_USB_Device_ControlRequest(void)
 {
+    Serial_SendByte(BYTE_DEBUG);
+    Serial_SendByte(sizeof(USB_ControlRequest));
+    Serial_SendData(&USB_ControlRequest, sizeof(USB_ControlRequest));
 
+    if(USB_ControlRequest.bmRequestType == (REQDIR_DEVICETOHOST | REQTYPE_VENDOR | REQREC_INTERFACE))
+    {
+        if (USB_ControlRequest.bRequest == 6) // vendor-defined request
+        {
+            if (USB_ControlRequest.wValue == 0x4200)
+            {
+                Endpoint_ClearSETUP();
+                Endpoint_Write_Control_PStream_LE(vendor1, USB_ControlRequest.wLength);
+                Endpoint_ClearOUT();
+            }
+        }
+        else if (USB_ControlRequest.bRequest == REQ_GetReport)
+        {
+            if (USB_ControlRequest.wValue == 0x0200)
+            {
+                Endpoint_ClearSETUP();
+                Endpoint_Write_Control_PStream_LE(vendor2, USB_ControlRequest.wLength);
+                Endpoint_ClearOUT();
+            }
+            else if (USB_ControlRequest.wValue == 0x0100)
+            {
+                Endpoint_ClearSETUP();
+                Endpoint_Write_Control_PStream_LE(vendor3, USB_ControlRequest.wLength);
+                Endpoint_ClearOUT();
+            }
+        }
+    }
+    else if(USB_ControlRequest.bmRequestType == (REQDIR_DEVICETOHOST | REQTYPE_CLASS | REQREC_INTERFACE))
+    {
+        if (USB_ControlRequest.bRequest == REQ_GetReport)
+        {
+            if (USB_ControlRequest.wValue == 0x0100)
+            {
+                report[12] = report[14] = report[16] = report[18] = 0x80;
+                Endpoint_ClearSETUP();
+                Endpoint_Write_Control_Stream_LE(report, USB_ControlRequest.wLength);
+                Endpoint_ClearOUT();
+                initialized = 1;
+            }
+        }
+    }
 }
 
 /** Event handler for the USB device Start Of Frame event. */
@@ -258,22 +339,45 @@ void SendNextReport(void)
 /** Reads the next OUT report from the host from the OUT endpoint, if one has been sent. */
 void ReceiveNextReport(void)
 {
-	/* Select the OUT Report Endpoint */
-	Endpoint_SelectEndpoint(XBOX_OUT_EPNUM);
+    static struct
+    {
+        struct
+        {
+            unsigned char type;
+            unsigned char length;
+        } header;
+        unsigned char buffer[XBOX_EPSIZE];
+    } packet = { .header.type = BYTE_OUT_REPORT };
 
-	/* Check if OUT Endpoint contains a packet */
-	if (Endpoint_IsOUTReceived())
-	{
-		/* Check to see if the packet contains data */
-		if (Endpoint_IsReadWriteAllowed())
-		{
-			/* Discard data */
-			Endpoint_Discard_Stream(6, NULL);
-		}
+    uint16_t length = 0;
 
-		/* Handshake the OUT Endpoint - clear endpoint and ready for next report */
-		Endpoint_ClearOUT();
-	}
+    /* Select the OUT Report Endpoint */
+    Endpoint_SelectEndpoint(XBOX_OUT_EPNUM);
+
+    /* Check if OUT Endpoint contains a packet */
+    if (Endpoint_IsOUTReceived())
+    {
+
+        /* Check to see if the packet contains data */
+        if (Endpoint_IsReadWriteAllowed())
+        {
+            /* Read OUT Report Data */
+            uint8_t ErrorCode = Endpoint_Read_Stream_LE(packet.buffer, sizeof(packet.buffer), &length);
+            if (ErrorCode == ENDPOINT_RWSTREAM_NoError)
+            {
+                length = sizeof(packet.buffer);
+            }
+        }
+
+        /* Handshake the OUT Endpoint - clear endpoint and ready for next report */
+        Endpoint_ClearOUT();
+
+        if (length)
+        {
+            packet.header.length = length & 0xFF;
+            Serial_SendData(&packet, sizeof(packet.header) + packet.header.length);
+        }
+    }
 }
 
 /** Function to manage HID report generation and transmission to the host, when in report mode. */

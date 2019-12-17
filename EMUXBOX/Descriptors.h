@@ -55,7 +55,7 @@
 					
 	/* Macros: */
 		/** Endpoint number of the Xbox HID reporting IN endpoint. */
-		#define XBOX_IN_EPNUM            (ENDPOINT_DIR_IN | 2)
+		#define XBOX_IN_EPNUM            (ENDPOINT_DIR_IN | 1)
 
 		/** Endpoint number of the Xbox HID reporting OUT endpoint. */
 		#define XBOX_OUT_EPNUM           (ENDPOINT_DIR_OUT | 2)

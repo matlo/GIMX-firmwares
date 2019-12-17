@@ -46,7 +46,7 @@ const USB_Descriptor_Device_t PROGMEM DeviceDescriptor =
 {
 	.Header                 = {.Size = sizeof(USB_Descriptor_Device_t), .Type = DTYPE_Device},
 		
-	.USBSpecification       = VERSION_BCD(01.10),
+	.USBSpecification       = 0x0110,
 	.Class                  = 0x00,
 	.SubClass               = 0x00,
 	.Protocol               = 0x00,
@@ -54,8 +54,8 @@ const USB_Descriptor_Device_t PROGMEM DeviceDescriptor =
 	.Endpoint0Size          = FIXED_CONTROL_ENDPOINT_SIZE,
 
 	.VendorID               = 0x045e,
-	.ProductID              = 0x0202,
-	.ReleaseNumber          = 0x0100,
+	.ProductID              = 0x0289,
+	.ReleaseNumber          = 0x0120,
 
 	.ManufacturerStrIndex   = 0x00,
 	.ProductStrIndex        = 0x00,
