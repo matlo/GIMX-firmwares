@@ -85,7 +85,7 @@ static volatile unsigned char sendReport = 1; // first input report is above
 static volatile unsigned char started = 0;
 static volatile unsigned char packet_type = 0;
 static volatile unsigned char value_len = 0;
-static volatile unsigned char initialized = 0; // inhibit further input reports until requested on control endpoint
+static volatile unsigned char initialized = 1;
 
 void forceHardReset(void)
 {
@@ -258,10 +258,6 @@ const char PROGMEM vendor3[] =
  */
 void EVENT_USB_Device_ControlRequest(void)
 {
-    Serial_SendByte(BYTE_DEBUG);
-    Serial_SendByte(sizeof(USB_ControlRequest));
-    Serial_SendData(&USB_ControlRequest, sizeof(USB_ControlRequest));
-
     if(USB_ControlRequest.bmRequestType == (REQDIR_DEVICETOHOST | REQTYPE_VENDOR | REQREC_INTERFACE))
     {
         if (USB_ControlRequest.bRequest == 6) // vendor-defined request
@@ -302,6 +298,17 @@ void EVENT_USB_Device_ControlRequest(void)
                 initialized = 1;
             }
         }
+    }
+
+    if (USB_ControlRequest.bmRequestType == REQDIR_DEVICETOHOST
+            && USB_ControlRequest.bRequest == REQ_GetDescriptor
+            && (USB_ControlRequest.wValue >> 8) == DTYPE_Configuration
+            && USB_ControlRequest.wLength == 0x50) {
+        /*
+         * Assume Xbox console is connected.
+         * Report a first input report, then inhibit input reports until it is requested on control endpoint.
+         */
+        initialized = 0;
     }
 }
 
