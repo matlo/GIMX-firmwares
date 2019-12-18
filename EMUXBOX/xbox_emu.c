@@ -85,7 +85,7 @@ static volatile unsigned char sendReport = 1; // first input report is above
 static volatile unsigned char started = 0;
 static volatile unsigned char packet_type = 0;
 static volatile unsigned char value_len = 0;
-static volatile unsigned char initialized = 0; // inhibit further input reports until requested on control endpoint
+static volatile unsigned char initialized = 1;
 
 void forceHardReset(void)
 {
@@ -139,7 +139,7 @@ static inline void handle_packet(void)
       forceHardReset();
       break;
     case BYTE_IN_REPORT:
-      sendReport |= initialized;
+      sendReport = 1;
       //no answer
       break;
   }
@@ -151,7 +151,7 @@ ISR(USART1_RX_vect)
 {
   packet_type = UDR1;
   value_len = Serial_BlockingReceiveByte();
-  if(packet_type == BYTE_IN_REPORT && initialized)
+  if(packet_type == BYTE_IN_REPORT)
   {
     pdata = report;
   }
@@ -258,9 +258,7 @@ const char PROGMEM vendor3[] =
  */
 void EVENT_USB_Device_ControlRequest(void)
 {
-    Serial_SendByte(BYTE_DEBUG);
-    Serial_SendByte(sizeof(USB_ControlRequest));
-    Serial_SendData(&USB_ControlRequest, sizeof(USB_ControlRequest));
+    static unsigned char buffer[MAX_CONTROL_TRANSFER_SIZE];
 
     if(USB_ControlRequest.bmRequestType == (REQDIR_DEVICETOHOST | REQTYPE_VENDOR | REQREC_INTERFACE))
     {
@@ -303,6 +301,23 @@ void EVENT_USB_Device_ControlRequest(void)
             }
         }
     }
+    else if(USB_ControlRequest.bmRequestType == (REQDIR_HOSTTODEVICE | REQTYPE_CLASS | REQREC_INTERFACE))
+    {
+        if (USB_ControlRequest.bRequest == REQ_SetReport)
+        {
+            if (USB_ControlRequest.wValue == 0x0200)
+            {
+                Endpoint_ClearSETUP();
+                Endpoint_Read_Control_Stream_LE(buffer, USB_ControlRequest.wLength);
+                Endpoint_ClearIN();
+
+                uint8_t length = USB_ControlRequest.wLength & 0xff;
+                Serial_SendByte(BYTE_OUT_REPORT);
+                Serial_SendByte(length);
+                Serial_SendData(buffer, length);
+            }
+        }
+    }
 }
 
 /** Event handler for the USB device Start Of Frame event. */
@@ -321,8 +336,8 @@ void SendNextReport(void)
 
 	if (sendReport)
 	{
-	  /* Wait until the host is ready to accept another packet */
-	  while (!Endpoint_IsINReady()) {}
+	  /* Check if the host is ready to accept another packet */
+	  if (Endpoint_IsINReady()) {
 
 		/* Write IN Report Data */
 		Endpoint_Write_Stream_LE(report, sizeof(report), NULL);
@@ -331,6 +346,7 @@ void SendNextReport(void)
 
 		/* Finalize the stream transfer to send the last packet */
 		Endpoint_ClearIN();
+	  }
 	}
 
   //Endpoint_SetEndpointDirection(ENDPOINT_DIR_OUT);
