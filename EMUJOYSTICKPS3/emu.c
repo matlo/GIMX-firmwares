@@ -41,8 +41,8 @@
 
 #define MAX_CONTROL_TRANSFER_SIZE 64
 
-#define USART_BAUDRATE 500000
-#define USART_DOUBLE_SPEED false
+#define USART_BAUDRATE 2000000
+#define USART_DOUBLE_SPEED true
 
 /*
  * The reference report data.
@@ -69,7 +69,7 @@ static volatile unsigned char started = 0;
 static volatile unsigned char packet_type = 0;
 static volatile unsigned char value_len = 0;
 
-static inline int16_t Serial_BlockingReceiveByte(void)
+static inline uint8_t Serial_BlockingReceiveByte(void)
 {
   while(!Serial_IsCharReceived());
   return UDR1;
@@ -245,21 +245,22 @@ void EVENT_USB_Device_ControlRequest(void)
 /** Sends the next HID report to the host, via the IN endpoint. */
 void SendNextReport(void)
 {
-  /* Select the IN Report Endpoint */
-	Endpoint_SelectEndpoint(IN_EPNUM);
 
   if (sendReport)
   {
-    /* Wait until the host is ready to accept another packet */
-    while (!Endpoint_IsINReady()) {}
+    /* Select the IN Report Endpoint */
+	Endpoint_SelectEndpoint(IN_EPNUM);
 
-    /* Write IN Report Data */
-    Endpoint_Write_Stream_LE(report, sizeof(report), NULL);
+    if (Endpoint_IsINReady()) {
 
-    sendReport = 0;
+		/* Write IN Report Data */
+		Endpoint_Write_Stream_LE(report, sizeof(report), NULL);
 
-    /* Finalize the stream transfer to send the last packet */
-    Endpoint_ClearIN();
+		sendReport = 0;
+
+		/* Finalize the stream transfer to send the last packet */
+		Endpoint_ClearIN();
+    }
   }
 }
 
