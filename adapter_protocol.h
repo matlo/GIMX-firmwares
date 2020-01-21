@@ -8,10 +8,13 @@
 
 #define BYTE_NO_PACKET    0x00
 #define BYTE_TYPE         0x11
-#define BYTE_STATUS       0x22
+#define BYTE_STATUS       0x22 // no more used
 #define BYTE_START        0x33
 #define BYTE_CONTROL_DATA 0x44
 #define BYTE_RESET        0x55
+#define BYTE_IDS          0x66
+#define BYTE_VERSION      0x77
+#define BYTE_BAUDRATE     0x88
 #define BYTE_DEBUG        0x99
 #define BYTE_OUT_REPORT   0xee
 #define BYTE_IN_REPORT    0xff
@@ -29,6 +32,7 @@
 #define BYTE_TYPE_DF_PS2     0x0a
 #define BYTE_TYPE_DFP_PS2    0x0b
 #define BYTE_TYPE_GTF_PS2    0x0c
+#define BYTE_TYPE_G920_XONE  0x0d
 
 #define BYTE_STATUS_NSPOOFED 0x00
 #define BYTE_STATUS_SPOOFED  0x01
