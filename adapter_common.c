@@ -74,8 +74,8 @@ static volatile uint8_t value_len = 0;
 static volatile uint8_t spoofReply = 0;
 static volatile uint8_t spoofReplyLen = 0;
 static volatile uint8_t spoof_initialized = BYTE_STATUS_NSPOOFED;
-static volatile uint16_t vid = 0;
-static volatile uint16_t pid = 0;
+volatile uint16_t vid = 0;
+volatile uint16_t pid = 0;
 static volatile uint8_t baudrate = USART_BAUDRATE;
 
 void forceHardReset(void) {
@@ -135,8 +135,8 @@ static inline void handle_packet(void) {
         //no answer
         break;
     case BYTE_IDS:
-        vid = buf[0] << 8 & buf[1];
-        pid = buf[2] << 8 & buf[3];
+        vid = buf[0] << 8 | buf[1];
+        pid = buf[2] << 8 | buf[3];
         //no answer
         break;
     case BYTE_BAUDRATE:
