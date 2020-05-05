@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2019 Mathieu Laurendeau <mat.lau@laposte.net>
+ Copyright (c) 2020 Mathieu Laurendeau <mat.lau@laposte.net>
  License: GPLv3
  */
 
@@ -11,57 +11,53 @@
 #define DTYPE_Report 0x22
 
 const uint8_t PROGMEM Report[] = {
-    0x05, 0x01, /* Usage Page (Desktop), */
-    0x09, 0x04, /* Usage (Joystik), */
-    0xA1, 0x01, /* Collection (Application), */
-    0xA1, 0x02, /* Collection (Logical), */
-
-    0x95, 0x01, /* Report Count (1), */
-    0x75, 0x0E, /* Report Size (14), */
-    0x14, /* Logical Minimum (0), */
-    0x26, 0xFF, 0x3F, /* Logical Maximum (16383), */
-    0x34, /* Physical Minimum (0), */
-    0x46, 0xFF, 0x3F, /* Physical Maximum (16383), */
-    0x09, 0x30, /* Usage (X), */
-    0x81, 0x02, /* Input (Variable), */
-
-    0x95, 0x0E, /* Report Count (14), */
-    0x75, 0x01, /* Report Size (1), */
-    0x25, 0x01, /* Logical Maximum (1), */
-    0x45, 0x01, /* Physical Maximum (1), */
-    0x05, 0x09, /* Usage Page (Button), */
-    0x19, 0x01, /* Usage Minimum (01h), */
-    0x29, 0x0E, /* Usage Maximum (0Eh), */
-    0x81, 0x02, /* Input (Variable), */
-
-    0x05, 0x01, /* Usage Page (Desktop), */
-    0x95, 0x01, /* Report Count (1), */
-    0x75, 0x04, /* Report Size (4), */
-    0x25, 0x07, /* Logical Maximum (7), */
-    0x46, 0x3B, 0x01, /* Physical Maximum (315), */
-    0x65, 0x14, /* Unit (Degrees), */
-    0x09, 0x39, /* Usage (Hat Switch), */
-    0x81, 0x42, /* Input (Variable, Nullstate), */
-
-    0x65, 0x00, /* Unit, */
-    0x26, 0xFF, 0x00, /* Logical Maximum (255), */
-    0x46, 0xFF, 0x00, /* Physical Maximum (255), */
-    0x75, 0x08, /* Report Size (8), */
-    0x81, 0x01, /* Input (Constant), */
-    0x09, 0x31, /* Usage (Y), */
-    0x81, 0x02, /* Input (Variable), */
-
-    0x09, 0x35, /* Usage (Rz), */
-    0x81, 0x02, /* Input (Variable), */
-
-    0x81, 0x01, /* Input (Constant), */
-    0xC0, /* End Collection, */
-    0xA1, 0x02, /* Collection (Logical), */
-    0x09, 0x02, /* Usage (02h), */
-    0x95, 0x07, /* Report Count (7), */
-    0x91, 0x02, /* Output (Variable), */
-    0xC0, /* End Collection, */
-    0xC0 /* End Collection */
+        0x05, 0x01,         /*  Usage Page (Desktop),                   */
+        0x09, 0x04,         /*  Usage (Joystik),                        */
+        0xA1, 0x01,         /*  Collection (Application),               */
+        0xA1, 0x02,         /*      Collection (Logical),               */
+        0x95, 0x01,         /*          Report Count (1),               */
+        0x75, 0x0E,         /*          Report Size (14),               */
+        0x15, 0x00,         /*          Logical Minimum (0),            */
+        0x26, 0xFF, 0x3F,   /*          Logical Maximum (16383),        */
+        0x35, 0x00,         /*          Physical Minimum (0),           */
+        0x46, 0xFF, 0x3F,   /*          Physical Maximum (16383),       */
+        0x09, 0x30,         /*          Usage (X),                      */
+        0x81, 0x02,         /*          Input (Variable),               */
+        0x95, 0x0E,         /*          Report Count (14),              */
+        0x75, 0x01,         /*          Report Size (1),                */
+        0x25, 0x01,         /*          Logical Maximum (1),            */
+        0x45, 0x01,         /*          Physical Maximum (1),           */
+        0x05, 0x09,         /*          Usage Page (Button),            */
+        0x19, 0x01,         /*          Usage Minimum (01h),            */
+        0x29, 0x0E,         /*          Usage Maximum (0Eh),            */
+        0x81, 0x02,         /*          Input (Variable),               */
+        0x05, 0x01,         /*          Usage Page (Desktop),           */
+        0x95, 0x01,         /*          Report Count (1),               */
+        0x75, 0x04,         /*          Report Size (4),                */
+        0x25, 0x07,         /*          Logical Maximum (7),            */
+        0x46, 0x3B, 0x01,   /*          Physical Maximum (315),         */
+        0x65, 0x14,         /*          Unit (Degrees),                 */
+        0x09, 0x39,         /*          Usage (Hat Switch),             */
+        0x81, 0x42,         /*          Input (Variable, Null State),   */
+        0x65, 0x00,         /*          Unit,                           */
+        0x95, 0x01,         /*          Report Count (1),               */
+        0x75, 0x08,         /*          Report Size (8),                */
+        0x26, 0xFF, 0x00,   /*          Logical Maximum (255),          */
+        0x46, 0xFF, 0x00,   /*          Physical Maximum (255),         */
+        0x09, 0x31,         /*          Usage (Y),                      */
+        0x81, 0x02,         /*          Input (Variable),               */
+        0x06, 0x00, 0xFF,   /*          Usage Page (FF00h),             */
+        0x09, 0x00,         /*          Usage (00h),                    */
+        0x95, 0x03,         /*          Report Count (3),               */
+        0x75, 0x08,         /*          Report Size (8),                */
+        0x81, 0x02,         /*          Input (Variable),               */
+        0xC0,               /*      End Collection,                     */
+        0xA1, 0x02,         /*      Collection (Logical),               */
+        0x09, 0x02,         /*          Usage (02h),                    */
+        0x95, 0x07,         /*          Report Count (7),               */
+        0x91, 0x02,         /*          Output (Variable),              */
+        0xC0,               /*      End Collection,                     */
+        0xC0                /*  End Collection                          */
 };
 
 const USB_Descriptor_Device_t PROGMEM DeviceDescriptor = {
