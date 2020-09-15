@@ -1,0 +1,8 @@
+after 0x80 0x04 Enable USB HID Joystick report
+Send USB_StandardReport_t
+
+before 0x80 0x04d
+Send USB_HID_Report_t
+
+https://mzyy94.com/blog/2020/03/20/nintendo-switch-pro-controller-usb-gadget/
+https://github.com/javmarina/Nintendo-Switch-Remote-Control
