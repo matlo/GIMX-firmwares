@@ -126,9 +126,7 @@ void process_OUT_report(uint8_t* ReportData, uint8_t ReportSize) {
 }
 
 void send_IN_report(void) {
-    before_send();
-
-    if (!nextPacketReady) {
+    if (!nextPacketReady && before_send()) {
         // No requests from Switch, use standard report
         if (startReport)
         {
@@ -143,12 +141,14 @@ void send_IN_report(void) {
         }
     }
 
-    Endpoint_SelectEndpoint(JOYSTICK_IN_EPADDR);
-    while (!Endpoint_IsINReady()); // Wait until IN endpoint is ready
-    while (Endpoint_Write_Stream_LE(&replyBuffer, sizeof(replyBuffer), NULL) != ENDPOINT_RWSTREAM_NoError);
-    Endpoint_ClearIN(); // We then send an IN packet on this endpoint.
-
-    nextPacketReady = false;
+    if (nextPacketReady)
+    {
+        Endpoint_SelectEndpoint(JOYSTICK_IN_EPADDR);
+        while (!Endpoint_IsINReady()); // Wait until IN endpoint is ready
+        while (Endpoint_Write_Stream_LE(&replyBuffer, sizeof(replyBuffer), NULL) != ENDPOINT_RWSTREAM_NoError);
+        Endpoint_ClearIN(); // We then send an IN packet on this endpoint.
+        nextPacketReady = false;
+    }
 }
 
 /*

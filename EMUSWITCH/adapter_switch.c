@@ -293,11 +293,11 @@ static bool CALLBACK_beforeSend() {
     if (sendReport)
     {
         selectedReport = (USB_ExtendedReport_t *)&report[0];
+        sendReport = 0;
         return true;
     }
     else
     {
-        selectedReport = &idleReport;
         return false;
     }
 }
