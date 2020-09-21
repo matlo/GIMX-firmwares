@@ -33,6 +33,7 @@
 #define BYTE_TYPE_DFP_PS2    0x0b
 #define BYTE_TYPE_GTF_PS2    0x0c
 #define BYTE_TYPE_G920_XONE  0x0d
+#define BYTE_TYPE_SWITCH     0x0e
 
 #define BYTE_STATUS_NSPOOFED 0x00
 #define BYTE_STATUS_SPOOFED  0x01
