@@ -15,6 +15,9 @@
 #include "../adapter_protocol.h"
 #include "Config/AdapterConfig.h"
 
+#include "include/twi.h"
+#include "include/Wire.h"
+
 #ifndef ADAPTER_TYPE
 #error ADAPTER_TYPE is not defined!
 #endif
@@ -77,6 +80,59 @@ static volatile uint8_t spoof_initialized = BYTE_STATUS_NSPOOFED;
 volatile uint16_t vid = 0;
 volatile uint16_t pid = 0;
 static volatile uint8_t baudrate = USART_BAUDRATE;
+
+uint8_t x = 0;
+
+void LED_init() {
+    DDRC |= (1<<DDC7);  // Pin 13(Board LED)
+}
+
+void LED() {
+    // Pin 13(Board LED)開關
+    PORTC ^= (1<<PORTC7);
+    // _delay_ms(50);
+    // PORTC &= ~ (1<<PORTC7);
+    // _delay_ms(50);
+}
+
+void test_init() {
+    DDRB |= (1<<DDB4);  // Pin 8設定
+}
+
+void test() {
+    // Pin 8開關
+    PORTB |= (1<<PORTB4);
+    PORTB &= ~ (1<<PORTB4);
+}
+
+void receiveEvent(int howMany) {
+    while (1 < available()) { // loop through all but the last
+        // char c = Wire.read(); // receive byte as a character
+        // Serial.print(c);         // print the character
+    }
+    x = read();    // receive byte as an integer
+    if (x == 68) {
+        //LED();
+    }
+}
+
+void requestEvent() {
+	// x = x + 1;
+	write_data(report[1]);
+	/*
+	write_data(0x41); // respond with message of 8 bytes
+	write_data(0x42);
+	write_data(0x43);
+	write_data(0x44);
+	
+	write_data(0x45);
+	write_data(0x46);
+	write_data(0x47);
+	write_data(0x48);
+	*/
+	LED();
+	// as expected by master
+}
 
 void forceHardReset(void) {
     cli(); // disable interrupts
@@ -298,6 +354,12 @@ void HID_Task(void) {
 int main(void) {
 
     SetupHardware();
+	LED_init();
+    test_init();
+    begin(8);
+    onReceive(receiveEvent); // register event
+	onRequest(requestEvent); // register event
+    sei();
 
     while (1) {
         HID_Task();

@@ -3,7 +3,10 @@
  License: GPLv3
  */
 
+#include "../src/twi.c"
+#include "../src/Wire.c"
 #include "../adapter_common.c"
+
 
 const uint8_t PROGMEM buff3[] = {
         0xF3, 0x00, 0x38, 0x38, 0x00, 0x00, 0x00, 0x00
