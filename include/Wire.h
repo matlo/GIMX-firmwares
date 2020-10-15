@@ -15,8 +15,8 @@
 // WIRE_HAS_END means Wire has end()
 #define WIRE_HAS_END 1
 
-void begin();
-void end();
+void begin(int);
+void end(void);
 void setClock(uint32_t);
 uint8_t requestFrom(uint8_t, uint8_t, uint32_t, uint8_t, uint8_t);
 void beginTransmission(int);

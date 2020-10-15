@@ -40,8 +40,7 @@ void begin(int address) {
     twi_setAddress((uint8_t)address);
 }
 
-void end(void)
-{
+void end(void) {
   twi_disable();
 }
 
