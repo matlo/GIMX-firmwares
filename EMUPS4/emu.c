@@ -5,6 +5,7 @@
 
 #include "../src/twi.c"
 #include "../src/Wire.c"
+#include "../src/my_data_receive.c"
 #include "../adapter_common.c"
 
 

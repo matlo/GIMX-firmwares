@@ -17,6 +17,7 @@
 
 #include "include/twi.h"
 #include "include/Wire.h"
+#include "include/my_data_receive.h"
 
 #ifndef ADAPTER_TYPE
 #error ADAPTER_TYPE is not defined!
@@ -83,55 +84,51 @@ static volatile uint8_t baudrate = USART_BAUDRATE;
 
 uint8_t x = 0;
 
-void LED_init() {
+void LED_init(void) {
     DDRC |= (1<<DDC7);  // Pin 13(Board LED)
 }
 
-void LED() {
+void LED(void) {
     // Pin 13(Board LED)開關
     PORTC ^= (1<<PORTC7);
+    // PORTC |= (1<<PORTC7);
     // _delay_ms(50);
     // PORTC &= ~ (1<<PORTC7);
     // _delay_ms(50);
 }
 
-void test_init() {
+void test_init(void) {
     DDRB |= (1<<DDB4);  // Pin 8設定
 }
 
-void test() {
+void test(void) {
     // Pin 8開關
     PORTB |= (1<<PORTB4);
     PORTB &= ~ (1<<PORTB4);
 }
 
 void receiveEvent(int howMany) {
-    while (1 < available()) { // loop through all but the last
-        // char c = Wire.read(); // receive byte as a character
-        // Serial.print(c);         // print the character
-    }
-    x = read();    // receive byte as an integer
-    if (x == 68) {
-        //LED();
+    LED();  // 通訊狀態判斷
+    uint8_t incoming_byte;
+    while (available()) {
+        incoming_byte = read();
+        data_event(incoming_byte);
+        test();
     }
 }
 
-void requestEvent() {
-	// x = x + 1;
-	write_data(report[1]);
-	/*
-	write_data(0x41); // respond with message of 8 bytes
-	write_data(0x42);
-	write_data(0x43);
-	write_data(0x44);
-	
-	write_data(0x45);
-	write_data(0x46);
-	write_data(0x47);
-	write_data(0x48);
-	*/
-	LED();
-	// as expected by master
+void requestEvent(void) {
+    write_data(get_data(1, 9)); // respond with message of 4 bytes
+    write_data(get_data(1, 2));
+    write_data(get_data(1, 3));
+    write_data(get_data(1, 4));
+/*
+    write_data(0x45);
+    write_data(0x46);
+    write_data(0x47);
+    write_data(0x48);
+    // LED();
+*/
 }
 
 void forceHardReset(void) {
@@ -354,11 +351,11 @@ void HID_Task(void) {
 int main(void) {
 
     SetupHardware();
-	LED_init();
+    LED_init();
     test_init();
     begin(8);
     onReceive(receiveEvent); // register event
-	onRequest(requestEvent); // register event
+    onRequest(requestEvent); // register event
     sei();
 
     while (1) {
